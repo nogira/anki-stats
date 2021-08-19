@@ -4,7 +4,7 @@ This is a python package to make it easier to analyse an anki database. Directly
 So far you can get each of the tables in the database, but you will have to combine the tables yourself.
 
 ### Roadmap
-- Add more predictive feautures to combines tables
+- Add more predictive features to combined tables
 - Functions to return simple analytical plots
 - ML model to accurately (hopefully) predict probability of recall, allowing ease to be more objectively assigned
 
