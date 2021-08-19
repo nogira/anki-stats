@@ -25,7 +25,7 @@ Copy your anki database (`collection.anki2`) from its folder.
 ```py
 import ankistats as ak
 
-# create database instance by inputting filepath to collection.anki2
+# create database instance by inputting a filepath to collection.anki2
 db = ak.read('collection.anki2')
 
 # assign a table from the database to df
