@@ -18,12 +18,16 @@ Anyone is welcome to make a PR or suggest anything specific to add :)
 pip install ankistats
 ```
 ## Use
+Copy your anki database (`collection.anki2`) from its folder.
+- Mac: `/Users/<user_name>/Library/Application Support/Anki2/<profile_name>`
+- Windows: `%appdata%/anki2/<profile_name>`
+- Linux: ?
 ```py
 import ankistats as ak
 
-# create database instance
+# create database instance by inputting filepath to collection.anki2
 db = ak.read('collection.anki2')
 
-# assign a table from database to df
+# assign a table from the database to df
 df = db.tbl_cards()
 ```
