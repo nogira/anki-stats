@@ -31,3 +31,10 @@ db = ak.read('collection.anki2')
 # assign a table from the database to df
 df = db.tbl_cards()
 ```
+
+### Anki Databases
+(may need to import it into latest version of anki to update the database structure before using it to analyse)
+
+- https://github.com/jpromanonet/myAnkiDataBases
+- https://github.com/hochanh/r-anki
+- add to this list if you know more !
