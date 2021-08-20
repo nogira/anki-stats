@@ -32,7 +32,7 @@ db = ak.read('collection.anki2')
 df = db.tbl_cards()
 ```
 
-### Anki Databases
+### Other Anki Databases
 (may need to import it into latest version of anki to update the database structure before using it to analyse)
 
 - https://github.com/jpromanonet/myAnkiDataBases
