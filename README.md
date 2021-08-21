@@ -37,7 +37,7 @@ db.plot_adjusted_ease_vs_len()
 <img width=600 src="https://i.postimg.cc/0NZcNhZK/plot.png">
 
 ### Other Anki Databases
-(may need to import it into latest version of anki to update the database structure before using it to analyse)
+(may need to import it into latest version of anki to auto-update the database structure before using it to analyse)
 
 - https://github.com/jpromanonet/myAnkiDataBases
 - https://github.com/hochanh/r-anki
