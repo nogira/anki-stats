@@ -1,5 +1,11 @@
 # Documentation
 
+<br>
+
+> ⚠️ **Note**: this is incomplete
+
+<br>
+
 ```py
 import ankistats as ak
 db = ak.read('collection.anki2')
