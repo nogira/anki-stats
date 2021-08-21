@@ -45,3 +45,7 @@ db.plot_adjusted_ease_vs_field_length(note_types=['Science (Basic)'])
 - https://github.com/jpromanonet/myAnkiDataBases
 - https://github.com/hochanh/r-anki
 - add to this list if you know more !
+
+## Credits
+- [Structure of anki database](https://github.com/ankidroid/Anki-Android/wiki/Database-Structure) (slightly outdated, but still super useful)
+- [English word frequency data](https://www.kaggle.com/rtatman/english-word-frequency)
