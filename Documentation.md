@@ -9,6 +9,26 @@ db = ak.read('collection.anki2')
 ```py
 db.tbl_cards()
 ```
+- ```py
+  # Columns
+  
+  'Card_ID/Time'
+  'Note_ID/Time'
+  'Deck_ID/Time'
+  'Card_Ordinal'
+  'Card_Time_Last_Modified'
+  'Card_Type'
+  'Card_Queue'
+  'Card_Due'
+  'Card_Current_Interval_(Minutes)'
+  'Card_Ease_Factor_(%)'
+  'Card_Total_Reviews_(Including_Lapses)'
+  'Card_Total_Lapses'
+  'Card_(reps_left_today)*1000+(reps_left_till_graduation)'
+  'Filtered_Card_Original_Due'
+  'Filtered_Card_Deck_ID/Time'
+  'Card_Flags'
+  ```
 
 ```py
 db.tbl_collections()
@@ -52,8 +72,28 @@ db.tbl_notes()
 
 ## Combined Tables
 ```py
-db.cards()
+db.cards()        # the combination of the cards table, the notes table
 ```
+#### Additional Columns/Features
+- ```py
+  'Card_Adjusted_Ease_Factor_(%)'
+  ```
+  - The expected ease factor if each card had a 85% retention rate; given by the formula:
+
+    <img width="300" src="https://render.githubusercontent.com/render/math?math=\frac{\ln(\text{desired retention rate})}{\ln(\text{current retention rate})} = \frac{\text{new ease}}{\text{current ease}}">
+
+- ```py
+  'Note_Field_<x>_Lowest_Frequency_Word'             # where <x> is the number of the field (e.g. <x> = 1)
+  ```
+  ```py
+  'Note_Field_<x>_Lowest_Frequency_Word_(Unigram)'   # where <x> is the number of the field (e.g. <x> = 1)
+  ```
+  ```py
+  'Note_Field_All_Lowest_Frequency_Word'
+  ```
+  ```py
+  'Note_Field_All_Lowest_Frequency_Word_(Unigram)'
+  ```
 
 ```py
 db.history()
