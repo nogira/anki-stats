@@ -8,7 +8,7 @@ So far you can get each of the tables in the database, but you will have to comb
 - Functions to return simple analytical plots
 - ML model to accurately (hopefully) predict probability of recall, allowing ease to be more objectively assigned
 
-Anyone is welcome to make a PR or suggest anything specific to add :)
+Anyone is welcome to submit a PR or suggest anything specific to add :)
 
 ### Dependencies
 - pandas
