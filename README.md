@@ -34,7 +34,7 @@ df = db.tbl_cards()
 # premade plot of the adjusted ease vs. field length (default is field 2; usually answer field)
 db.plot_adjusted_ease_vs_len(note_types=['Science (Basic)'])
 ```
-<img width=600 src="https://i.postimg.cc/0NZcNhZK/plot.png">
+<img width=600 src="https://i.postimg.cc/0yWgFvyW/plot.png">
 
 ### Other Anki Databases
 (may need to import it into latest version of anki to auto-update the database structure before using it to analyse)
