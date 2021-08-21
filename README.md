@@ -11,6 +11,7 @@ So far you can get each of the tables in the database, but you will have to comb
 Anyone is welcome to submit a PR or suggest anything specific to add :)
 
 ### Dependencies
+(these should auto-install when you install ankistats)
 - pandas
 - matplotlib
 
