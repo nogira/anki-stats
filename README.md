@@ -13,6 +13,7 @@ Anyone is welcome to submit a PR or suggest anything specific to add :)
 ### Dependencies
 - pandas
 - matplotlib
+
 (these should auto-install when you install ankistats)
 
 ## Install
