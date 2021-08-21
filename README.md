@@ -4,7 +4,7 @@ This is a python package to make it easier to analyse an anki database. Directly
 So far you can get each of the tables in the database, but you will have to combine the tables yourself.
 
 ### Roadmap
-- Add more predictive features to combined tables
+- Add more features to tables to aid analysis
 - Functions to return simple analytical plots
 - ML model to accurately (hopefully) predict probability of recall, allowing ease to be more objectively assigned
 
@@ -30,7 +30,11 @@ db = ak.read('collection.anki2')
 
 # assign a table from the database to df
 df = db.tbl_cards()
+
+# premade plot of the adjusted ease vs. field length (default is field 2; usually the answer field)
+db.plot_adjusted_ease_vs_len()
 ```
+<img width=600 src="https://i.postimg.cc/0NZcNhZK/plot.png">
 
 ### Other Anki Databases
 (may need to import it into latest version of anki to update the database structure before using it to analyse)
