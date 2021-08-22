@@ -3,23 +3,14 @@ This is a python package to make it easier to analyse an anki database. Directly
 
 So far you can get each of the tables in the database, but you will have to combine the tables yourself.
 
-### Roadmap
-- Add more features to tables to aid analysis
-- Functions to return simple analytical plots
-- ML model to accurately (hopefully) predict probability of recall, allowing ease to be more objectively assigned
-
-Anyone is welcome to submit a PR or suggest anything specific to add :)
-
-### Dependencies
+## Install
+```shell
+pip install ankistats
+```
+#### Dependencies
 - pandas
 - matplotlib
 
-(these should auto-install when you install ankistats)
-
-## Install
-```
-pip install ankistats
-```
 ## Use
 Copy your anki database (`collection.anki2`) from its folder.
 - Mac: `/Users/<user_name>/Library/Application Support/Anki2/<profile_name>`
@@ -51,6 +42,18 @@ db.plot_adjusted_ease_vs_field_length(note_types=['Science (Basic)'])
 - https://github.com/jpromanonet/myAnkiDataBases
 - https://github.com/hochanh/r-anki
 - add to this list if you know more !
+
+### Roadmap
+- Add more features to tables to aid analysis
+  - Feautures added thus far:
+    - Frequency of word in note field with the lowest frequency
+    - Character count (not including html)
+    - Word count (not including html)
+    - Whether note field has an image or not
+- More plots
+- ML model to accurately (hopefully) predict probability of recall, allowing ease to be more objectively assigned
+
+~ Anyone is welcome to submit a PR or suggest anything specific to add :) ~
 
 ## Credits
 - [Structure of anki database](https://github.com/ankidroid/Anki-Android/wiki/Database-Structure) (slightly outdated, but still super useful)
