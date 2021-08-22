@@ -30,7 +30,6 @@ db.tbl_cards()
   'Card_Ease_Factor_(%)'
   'Card_Total_Reviews_(Including_Lapses)'
   'Card_Total_Lapses'
-  'Card_(reps_left_today)*1000+(reps_left_till_graduation)'
   'Filtered_Card_Original_Due'
   'Filtered_Card_Deck_ID/Time'
   'Card_Flags'
