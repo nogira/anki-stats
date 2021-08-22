@@ -9,6 +9,10 @@ from numpy.polynomial.polynomial import Polynomial
 import math
 from os.path import abspath
 
+# scrap the cache idea for single tables
+# still cache combined tables, but make sure combined tables run their own sql query
+
+# do new adjusted retention rate over last 7 reps instead of over all reps
 
 class read():
 
@@ -43,11 +47,6 @@ class read():
                         df_dict[key] += [entry]
                     else:
                         df_dict[key] += [np.nan]
-        
-        # remove the 'unused' cols
-        for key in [k for k in df_dict.keys()]:
-            if ('unused' in key) or ('Update_Sequence_Number' in key):
-                del df_dict[key]
 
         return df_dict
 
@@ -208,9 +207,9 @@ class read():
         """Get the Cards Table From Database"""
 
         command = '''
-        SELECT id, nid, did, ord, mod, usn, type, queue, due, ivl, factor,
+        SELECT id, nid, did, ord, mod, type, queue, due, ivl, factor,
             reps,   --reps = total reps (i.e. failed reps + successful reps)
-            lapses, left, odue, odid, flags, data
+            lapses, odue, odid, flags
         FROM cards
         '''
 
@@ -222,7 +221,6 @@ class read():
             'Deck_ID/Time':[],
             'Card_Ordinal':[],
             'Card_Time_Last_Modified':[],
-            'Card_Update_Sequence_Number':[],
             'Card_Type':[],
             'Card_Queue':[],
             'Card_Due':[],
@@ -230,11 +228,9 @@ class read():
             'Card_Ease_Factor_(%)':[],
             'Card_Total_Reviews_(Including_Lapses)':[],
             'Card_Total_Lapses':[],
-            'Card_(reps_left_today)*1000+(reps_left_till_graduation)':[],
             'Filtered_Card_Original_Due':[],
             'Filtered_Card_Deck_ID/Time':[],
-            'Card_Flags':[],
-            'unused1':[]
+            'Card_Flags':[]                             # should prob convert nums to colors
         }
 
         df_dict = self.db_to_dict(db, df_dict)
@@ -294,7 +290,7 @@ class read():
 
         command = '''
         SELECT
-            id, crt, mod, scm, ver, dty, usn, ls, conf, models, decks, 
+            crt, mod, scm, ver, ls, conf, models, decks, 
             dconf, tags
 
         FROM col
@@ -303,13 +299,10 @@ class read():
         db = self.query_db(command)
 
         df_dict = {
-            'unused1':[],
             'Collection_Creation_Time':[],
             'Collection_Time_Last_Modified':[],
             'Collection_Last_Schema_Modified_Time':[],
             'Collection_Version':[],
-            'unused2':[],
-            'Collection_Update_Sequence_Number':[],
             'Collection_Last_Sync_Time':[],
             'Collection_Config_JSON':[],
             'Collection_Note_Type_JSON':[],
@@ -332,7 +325,7 @@ class read():
         """Get the Config Table From Database"""
 
         command = '''
-        SELECT KEY, usn, mtime_secs, val
+        SELECT KEY, mtime_secs, val
         FROM config
         '''
 
@@ -340,7 +333,6 @@ class read():
 
         df_dict = {
             'Config_Key':[],
-            'Config_Update_Sequence_Number':[],
             'Config_Time_Last_Modified':[],
             'Config_Value':[]
         }
@@ -354,7 +346,7 @@ class read():
         """Get the Deck Config Table From Database"""
 
         command = '''
-        SELECT id, name, mtime_secs, usn, config
+        SELECT id, name, mtime_secs, config
         FROM deck_config
         '''
 
@@ -364,7 +356,6 @@ class read():
             'Deck_ID/Time':[],
             'Deck_Name':[],
             'Deck_Config_Time_Last_Modified':[],
-            'Deck_Config_Update_Sequence_Number':[],
             'Deck_Config':[]
         }
 
@@ -386,7 +377,7 @@ class read():
         """Get the Decks Table From Database"""
 
         command = '''
-        SELECT id, name, mtime_secs, usn, common, kind
+        SELECT id, name, mtime_secs, common, kind
         FROM decks
         '''
 
@@ -396,7 +387,6 @@ class read():
             'Deck_ID/Time':[],
             'Deck_Name':[],
             'Deck_Time_Last_Modified':[],
-            'Deck_Update_Sequence_Number':[],
             'Deck_Common':[],
             'Deck_Kind':[]
         }
@@ -451,7 +441,7 @@ class read():
         """Get the Graves (deleted things) Table From Database"""
 
         command = '''
-        SELECT oid, type, usn
+        SELECT oid, type
         FROM FIELDS
         '''
 
@@ -459,8 +449,7 @@ class read():
 
         df_dict = {
             'Graves_Original_ID/Time':[],
-            'Graves_Type':[],
-            'Graves_Update_Sequence_Number':[]
+            'Graves_Type':[]
         }
 
         df_dict = self.db_to_dict(db, df_dict)
@@ -473,7 +462,7 @@ class read():
         return df
 
 
-    def tbl_history(self, extra_features=False):
+    def tbl_reviews(self, extra_features=False):
         """Get the Review History Table From Database"""
 
         if extra_features:
@@ -497,7 +486,7 @@ class read():
             
 
 
-            SELECT revlog.id, revlog.cid, revlog.usn, revlog.ease, revlog.ivl,
+            SELECT revlog.id, revlog.cid, revlog.ease, revlog.ivl,
                 revlog.lastIvl, revlog.factor, revlog.time, revlog.type,
                 last_known_ease.ease, revlog_avg_times.avg_time
             FROM revlog
@@ -509,7 +498,7 @@ class read():
 
         else:
             command = '''
-            SELECT id, cid, usn, ease, ivl, lastIvl, factor, time, type
+            SELECT id, cid, ease, ivl, lastIvl, factor, time, type
             FROM revlog
             '''
 
@@ -518,7 +507,6 @@ class read():
         df_dict = {
             'Review_ID/Time':[],
             'Card_ID/Time':[],
-            'Review_Update_Sequence_Number':[],
             'Review_Answer':[],
             'Review_New_Interval_(Minutes)':[],
             'Review_Last_Interval_(Minutes)':[],
@@ -583,7 +571,7 @@ class read():
         """Get the Note Types Table From Database"""
 
         command = '''
-        SELECT id, name, mtime_secs, usn, config
+        SELECT id, name, mtime_secs, config
         FROM notetypes
         '''
 
@@ -593,7 +581,6 @@ class read():
             'Note_Type_ID/Time':[],
             'Note_Type_Name':[],
             'Note_Type_Time_Last_Modified':[],
-            'Note_Type_Update_Sequence_Number':[],
             'Note_Type_Config':[]
         }
 
@@ -614,7 +601,7 @@ class read():
         """Get the Note Templates Table From Database"""
 
         command = '''
-        SELECT ntid, ord, name, mtime_secs, usn, config
+        SELECT ntid, ord, name, mtime_secs, config
         FROM templates
         '''
 
@@ -625,7 +612,6 @@ class read():
             'Note_Template_Ordinal':[],
             'Note_Template_Name':[],
             'Note_Template_Time_Last_Modified':[],
-            'Note_Template_Update_Sequence_Number':[],
             'Note_Template_Config':[]
         }
 
@@ -646,7 +632,7 @@ class read():
         """Get the Notes Table From Database"""
 
         command = '''
-        SELECT id, guid, mid, mod, usn, tags, flds, sfld, csum, flags, data
+        SELECT id, guid, mid, mod, tags, flds
         FROM notes
         '''
 
@@ -657,13 +643,8 @@ class read():
             'Globally_Unique_Note_ID':[],
             'Note_Type_ID/Time':[],
             'Note_Time_Last_Modified':[],
-            'Note_Update_Sequence_Number':[],
             'Note_Tags':[],
-            'Note_Fields':[],
-            'unused1':[],
-            'unused2':[],
-            'unused3':[],
-            'unused4':[]
+            'Note_Fields':[]
         }
 
         df_dict = self.db_to_dict(db, df_dict)
@@ -709,12 +690,12 @@ class read():
     # --------------------------------------------------------------------------
 
 
-    def history(self, extra_features=False, num_fields=None):
+    def reviews(self, extra_features=False, num_fields=None):
         """
         Get the Review History Table, and Join the Cards Table & Notes Table onto It
         """
 
-        df = pd.merge(self.tbl_history(), self.tbl_cards(), on="Card_ID/Time")
+        df = pd.merge(self.tbl_reviews(), self.tbl_cards(), on="Card_ID/Time")
         df = pd.merge(df, self.tbl_notes(num_fields=num_fields), on="Note_ID/Time")
         df = pd.merge(df, self.tbl_note_types(), on="Note_Type_ID/Time")
 
@@ -741,7 +722,7 @@ class read():
         if not(self.cards_cache) or self.cards_cache_note_types != note_types:
             df = pd.merge(
                 self.tbl_cards(),
-                self.tbl_history(extra_features=True)[[
+                self.tbl_reviews(extra_features=True)[[
                     'Card_ID/Time', 'Card_Last_Know_Ease_Factor_(%)',
                     'Card_Average_Review_Time_(Seconds)'
                 ]],
