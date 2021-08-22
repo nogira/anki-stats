@@ -776,6 +776,8 @@ class read():
                 new_ease.append((math.log(desired_RR) / math.log(desired_RR)) * ease)
             df['Card_Adjusted_Ease_Factor_(%)'] = new_ease
 
+            # --------------------------------
+
             # filter notetypes
             df = df[df['Note_Type_Name'].isin(note_types)]
 
