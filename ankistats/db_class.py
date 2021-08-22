@@ -104,7 +104,7 @@ class read():
             # remove side spaces
             df[new_col] = df[new_col].str.strip()
 
-        reps = 'Card_Total_Reviews_(Including_Lapses)'
+        reps = 'Card_Total_Reviews_Including_Lapses'
         lapses = 'Card_Total_Lapses'
         df['Card_Reviews_Fraction_Correct'] = (df[reps] - df[lapses]) / df[reps]
         del reps, lapses
@@ -182,7 +182,7 @@ class read():
 
             # now that freq antry list id complete, form a new col with the list
             df[col+"_Lowest_Frequency_Word"] = freq_entries
-            df[col+"_Lowest_Frequency_Word_(Unigram)"] = unigram_freq_entries
+            df[col+"_Lowest_Frequency_Word_From_Global_Texts"] = unigram_freq_entries
 
         # do lowest frequency across all cols
         df["Note_Field_All_Lowest_Frequency_Word"] = df.apply(
@@ -191,9 +191,9 @@ class read():
             ),
             axis=1
         )
-        df["Note_Field_All_Lowest_Frequency_Word_(Unigram)"] = df.apply(
+        df["Note_Field_All_Lowest_Frequency_Word_From_Global_Texts"] = df.apply(
             lambda x: min(
-                [x[col+"_Lowest_Frequency_Word_(Unigram)"] for col in field_cols]
+                [x[col+"_Lowest_Frequency_Word_From_Global_Texts"] for col in field_cols]
             ),
             axis=1
         )
@@ -216,20 +216,20 @@ class read():
         db = self.query_db(command)
 
         df_dict = {
-            'Card_ID/Time':[],
-            'Note_ID/Time':[],
-            'Deck_ID/Time':[],
+            'Card_ID':[],
+            'Note_ID':[],
+            'Deck_ID':[],
             'Card_Ordinal':[],
             'Card_Time_Last_Modified':[],
             'Card_Type':[],
             'Card_Queue':[],
             'Card_Due':[],
-            'Card_Current_Interval_(Minutes)':[],
-            'Card_Ease_Factor_(%)':[],
-            'Card_Total_Reviews_(Including_Lapses)':[],
+            'Card_Current_Interval_In_Minutes':[],
+            'Card_Ease_Factor_As_Percentage':[],
+            'Card_Total_Reviews_Including_Lapses':[],
             'Card_Total_Lapses':[],
             'Filtered_Card_Original_Due':[],
-            'Filtered_Card_Deck_ID/Time':[],
+            'Filtered_Card_Deck_ID':[],
             'Card_Flags':[]                             # should prob convert nums to colors
         }
 
@@ -237,16 +237,16 @@ class read():
         df = pd.DataFrame(df_dict)
 
         # unix time -> normal time
-        df['Card_ID/Time'] = pd.to_datetime(df['Card_ID/Time'],unit='ms').to_numpy()
-        df['Note_ID/Time'] = pd.to_datetime(df['Note_ID/Time'],unit='ms').to_numpy()
-        df['Deck_ID/Time'] = pd.to_datetime(df['Deck_ID/Time'],unit='ms').to_numpy()
-        df['Filtered_Card_Deck_ID/Time'] = pd.to_datetime(df['Filtered_Card_Deck_ID/Time'],unit='ms').to_numpy()
+        df['Card_ID'] = pd.to_datetime(df['Card_ID'],unit='ms').to_numpy()
+        df['Note_ID'] = pd.to_datetime(df['Note_ID'],unit='ms').to_numpy()
+        df['Deck_ID'] = pd.to_datetime(df['Deck_ID'],unit='ms').to_numpy()
+        df['Filtered_Card_Deck_ID'] = pd.to_datetime(df['Filtered_Card_Deck_ID'],unit='ms').to_numpy()
 
         # convert sec to date/time
         df['Card_Time_Last_Modified'] = pd.to_datetime(df['Card_Time_Last_Modified'],unit='s').to_numpy()
 
         # divide ease by ten to get to percentage
-        df['Card_Ease_Factor_(%)'] = df['Card_Ease_Factor_(%)'] / 10
+        df['Card_Ease_Factor_As_Percentage'] = df['Card_Ease_Factor_As_Percentage'] / 10
 
         # convert card type as integer to card type as string
         # 0=new, 1=learning, 2=review, 3=relearning
@@ -277,7 +277,7 @@ class read():
         })
 
         # convert intervals to minute timescale
-        df['Card_Current_Interval_(Minutes)'] = df['Card_Current_Interval_(Minutes)'].apply(
+        df['Card_Current_Interval_In_Minutes'] = df['Card_Current_Interval_In_Minutes'].apply(
             lambda x: (abs(x) / 60) if x < 0 else (x * 24 * 60)
         )                                       # day->hr->min
 
@@ -353,7 +353,7 @@ class read():
         db = self.query_db(command)
 
         df_dict = {
-            'Deck_ID/Time':[],
+            'Deck_ID':[],
             'Deck_Name':[],
             'Deck_Config_Time_Last_Modified':[],
             'Deck_Config':[]
@@ -364,7 +364,7 @@ class read():
         df = pd.DataFrame(df_dict)
 
         # unix time -> normal time
-        df['Deck_ID/Time'] = pd.to_datetime(df['Deck_ID/Time'],unit='ms').to_numpy()
+        df['Deck_ID'] = pd.to_datetime(df['Deck_ID'],unit='ms').to_numpy()
 
         # convert sec to date/time
         df['Deck_Config_Time_Last_Modified'] = pd.to_datetime(df['Deck_Config_Time_Last_Modified'],unit='s').to_numpy()
@@ -384,7 +384,7 @@ class read():
         db = self.query_db(command)
 
         df_dict = {
-            'Deck_ID/Time':[],
+            'Deck_ID':[],
             'Deck_Name':[],
             'Deck_Time_Last_Modified':[],
             'Deck_Common':[],
@@ -396,7 +396,7 @@ class read():
         df = pd.DataFrame(df_dict)
 
         # unix time -> normal time
-        df['Deck_ID/Time'] = pd.to_datetime(df['Deck_ID/Time'],unit='ms').to_numpy()
+        df['Deck_ID'] = pd.to_datetime(df['Deck_ID'],unit='ms').to_numpy()
 
         # convert sec to date/time
         df['Deck_Time_Last_Modified'] = pd.to_datetime(df['Deck_Time_Last_Modified'],unit='s').to_numpy()
@@ -416,7 +416,7 @@ class read():
         db = self.query_db(command)
 
         df_dict = {
-            'Note_Type_ID/Time':[],
+            'Note_Type_ID':[],
             'Note_Field_Ordinal':[],
             'Note_Field_Name':[],
             'Note_Field_Config':[]
@@ -427,7 +427,7 @@ class read():
         df = pd.DataFrame(df_dict)
 
         # unix time -> normal time
-        df['Note_Type_ID/Time'] = pd.to_datetime(df['Note_Type_ID/Time'],unit='ms').to_numpy()
+        df['Note_Type_ID'] = pd.to_datetime(df['Note_Type_ID'],unit='ms').to_numpy()
 
         # str1 = tbl1.Config[0].decode('CP1252')
         # print([str1.split('ú')[0].strip()])
@@ -448,8 +448,8 @@ class read():
         db = self.query_db(command)
 
         df_dict = {
-            'Graves_Original_ID/Time':[],
-            'Graves_Type':[]
+            'Grave_Original_ID':[],
+            'Grave_Type':[]
         }
 
         df_dict = self.db_to_dict(db, df_dict)
@@ -457,7 +457,7 @@ class read():
         df = pd.DataFrame(df_dict)
 
         # unix time -> normal time
-        df['Graves_Original_ID/Time'] = pd.to_datetime(df['Graves_Original_ID/Time'],unit='ms').to_numpy()
+        df['Grave_Original_ID'] = pd.to_datetime(df['Grave_Original_ID'],unit='ms').to_numpy()
 
         return df
 
@@ -505,32 +505,32 @@ class read():
         db = self.query_db(command)
 
         df_dict = {
-            'Review_ID/Time':[],
-            'Card_ID/Time':[],
+            'Review_ID':[],
+            'Card_ID':[],
             'Review_Answer':[],
-            'Review_New_Interval_(Minutes)':[],
-            'Review_Last_Interval_(Minutes)':[],
-            'Review_New_Ease_Factor_(%)':[],
-            'Review_Time_To_Answer_(Seconds)':[],
+            'Review_New_Interval_In_Minutes':[],
+            'Review_Last_Interval_In_Minutes':[],
+            'Review_New_Ease_Factor_As_Percentage':[],
+            'Review_Time_To_Answer_In_Seconds':[],
             'Review_Type':[]
         }
 
         if extra_features:
-            df_dict['Card_Last_Know_Ease_Factor_(%)'] = []
-            df_dict['Card_Average_Review_Time_(Seconds)'] = []
+            df_dict['Card_Last_Know_Ease_Factor_As_Percentage'] = []
+            df_dict['Card_Average_Review_Time_In_Seconds'] = []
 
         df_dict = self.db_to_dict(db, df_dict)
 
         df = pd.DataFrame(df_dict)
 
         # unix time -> normal time
-        df['Review_ID/Time'] = pd.to_datetime(df['Review_ID/Time'],unit='ms').to_numpy()
-        df['Card_ID/Time'] = pd.to_datetime(df['Card_ID/Time'],unit='ms').to_numpy()
+        df['Review_ID'] = pd.to_datetime(df['Review_ID'],unit='ms').to_numpy()
+        df['Card_ID'] = pd.to_datetime(df['Card_ID'],unit='ms').to_numpy()
 
         # divide ease by ten to get to percentage
-        df['Review_New_Ease_Factor_(%)'] = df['Review_New_Ease_Factor_(%)'] / 10
+        df['Review_New_Ease_Factor_As_Percentage'] = df['Review_New_Ease_Factor_As_Percentage'] / 10
         if extra_features:
-            df['Card_Last_Know_Ease_Factor_(%)'] = df['Card_Last_Know_Ease_Factor_(%)'] / 10
+            df['Card_Last_Know_Ease_Factor_As_Percentage'] = df['Card_Last_Know_Ease_Factor_As_Percentage'] / 10
 
         # convert review type as integer to review type as string
         # 0=learn, 1=review, 2=relearn, 3=cram
@@ -552,16 +552,16 @@ class read():
         })
 
         # convert intervals to minute timescale
-        for col in ['Review_New_Interval_(Minutes)', 'Review_Last_Interval_(Minutes)']:
+        for col in ['Review_New_Interval_In_Minutes', 'Review_Last_Interval_In_Minutes']:
             df[col] = df[col].apply(
                 lambda x: (abs(x) / 60) if x < 0 else (x * 24 * 60)
             )                                       # day->hr->min
 
         # convert time to seconds
-        df['Review_Time_To_Answer_(Seconds)'] = df['Review_Time_To_Answer_(Seconds)'] / 1000
+        df['Review_Time_To_Answer_In_Seconds'] = df['Review_Time_To_Answer_In_Seconds'] / 1000
 
         if extra_features:
-            df['Card_Average_Review_Time_(Seconds)'] = df['Card_Average_Review_Time_(Seconds)'] / 1000
+            df['Card_Average_Review_Time_In_Seconds'] = df['Card_Average_Review_Time_In_Seconds'] / 1000
 
 
         return  df
@@ -578,7 +578,7 @@ class read():
         db = self.query_db(command)
 
         df_dict = {
-            'Note_Type_ID/Time':[],
+            'Note_Type_ID':[],
             'Note_Type_Name':[],
             'Note_Type_Time_Last_Modified':[],
             'Note_Type_Config':[]
@@ -588,7 +588,7 @@ class read():
         df = pd.DataFrame(df_dict)
 
         # unix time -> normal time
-        df['Note_Type_ID/Time'] = pd.to_datetime(df['Note_Type_ID/Time'],unit='ms').to_numpy()
+        df['Note_Type_ID'] = pd.to_datetime(df['Note_Type_ID'],unit='ms').to_numpy()
 
         # convert sec to date/time
         df['Note_Type_Time_Last_Modified'] = pd.to_datetime(df['Note_Type_Time_Last_Modified'],unit='s').to_numpy()
@@ -608,7 +608,7 @@ class read():
         db = self.query_db(command)
 
         df_dict = {
-            'Note_Type_ID/Time':[],
+            'Note_Type_ID':[],
             'Note_Template_Ordinal':[],
             'Note_Template_Name':[],
             'Note_Template_Time_Last_Modified':[],
@@ -619,7 +619,7 @@ class read():
         df = pd.DataFrame(df_dict)
 
         # unix time -> normal time
-        df['Note_Type_ID/Time'] = pd.to_datetime(df['Note_Type_ID/Time'],unit='ms').to_numpy()
+        df['Note_Type_ID'] = pd.to_datetime(df['Note_Type_ID'],unit='ms').to_numpy()
 
         # convert sec to date/time
         # df['Note_Template_Time_Last_Modified'] = pd.to_datetime(df['Note_Template_Time_Last_Modified'],unit='s').to_numpy()
@@ -639,9 +639,9 @@ class read():
         db = self.query_db(command)
 
         df_dict = {
-            'Note_ID/Time':[],
-            'Globally_Unique_Note_ID':[],
-            'Note_Type_ID/Time':[],
+            'Note_ID':[],
+            'Note_Globally_Unique_ID':[],
+            'Note_Type_ID':[],
             'Note_Time_Last_Modified':[],
             'Note_Tags':[],
             'Note_Fields':[]
@@ -651,8 +651,8 @@ class read():
         df = pd.DataFrame(df_dict)
 
         # unix time -> normal time
-        df['Note_ID/Time'] = pd.to_datetime(df['Note_ID/Time'],unit='ms').to_numpy()
-        df['Note_Type_ID/Time'] = pd.to_datetime(df['Note_Type_ID/Time'],unit='ms').to_numpy()
+        df['Note_ID'] = pd.to_datetime(df['Note_ID'],unit='ms').to_numpy()
+        df['Note_Type_ID'] = pd.to_datetime(df['Note_Type_ID'],unit='ms').to_numpy()
         
         if num_fields:
             max_num_fields = num_fields
@@ -695,9 +695,9 @@ class read():
         Get the Review History Table, and Join the Cards Table & Notes Table onto It
         """
 
-        df = pd.merge(self.tbl_reviews(), self.tbl_cards(), on="Card_ID/Time")
-        df = pd.merge(df, self.tbl_notes(num_fields=num_fields), on="Note_ID/Time")
-        df = pd.merge(df, self.tbl_note_types(), on="Note_Type_ID/Time")
+        df = pd.merge(self.tbl_reviews(), self.tbl_cards(), on="Card_ID")
+        df = pd.merge(df, self.tbl_notes(num_fields=num_fields), on="Note_ID")
+        df = pd.merge(df, self.tbl_note_types(), on="Note_Type_ID")
 
         # are there any other tables that should be merged??
 
@@ -723,13 +723,13 @@ class read():
             df = pd.merge(
                 self.tbl_cards(),
                 self.tbl_reviews(extra_features=True)[[
-                    'Card_ID/Time', 'Card_Last_Know_Ease_Factor_(%)',
-                    'Card_Average_Review_Time_(Seconds)'
+                    'Card_ID', 'Card_Last_Know_Ease_Factor_As_Percentage',
+                    'Card_Average_Review_Time_In_Seconds'
                 ]],
-                on="Card_ID/Time"
+                on="Card_ID"
             )
-            df = pd.merge(df, self.tbl_notes(num_fields=num_fields), on="Note_ID/Time")
-            df = pd.merge(df, self.tbl_note_types(), on="Note_Type_ID/Time")
+            df = pd.merge(df, self.tbl_notes(num_fields=num_fields), on="Note_ID")
+            df = pd.merge(df, self.tbl_note_types(), on="Note_Type_ID")
 
             # are there any other tables that should be merged??
 
@@ -748,14 +748,14 @@ class read():
             # modify ease to get all cards to 85% retention rate (RR)
             # log(desired RR) / log(current RR) = new ease / current ease
             desired_RR = 0.85
-            old_ease = df['Card_Last_Know_Ease_Factor_(%)'].to_list()
+            old_ease = df['Card_Last_Know_Ease_Factor_As_Percentage'].to_list()
             new_ease = []
             for ease in old_ease:
 
                 # confirm this is log and not log10 !!
 
                 new_ease.append((math.log(desired_RR) / math.log(desired_RR)) * ease)
-            df['Card_Adjusted_Ease_Factor_(%)'] = new_ease
+            df['Card_Adjusted_Ease_Factor_As_Percentage'] = new_ease
 
             # --------------------------------
 
@@ -789,12 +789,12 @@ class read():
         #    and thus has no data
         #  • < 7 reviews so the fraction_reviews_correct has more data to go on
         if add_conditional_notna:
-            df = df[(df['Card_Adjusted_Ease_Factor_(%)'] != 0) &
-                    (df['Card_Total_Reviews_(Including_Lapses)'] > 6) &
+            df = df[(df['Card_Adjusted_Ease_Factor_As_Percentage'] != 0) &
+                    (df['Card_Total_Reviews_Including_Lapses'] > 6) &
                     (df[add_conditional_notna].notna())]
         else:
-            df = df[(df['Card_Adjusted_Ease_Factor_(%)'] != 0) &
-                    (df['Card_Total_Reviews_(Including_Lapses)'] > 6)]
+            df = df[(df['Card_Adjusted_Ease_Factor_As_Percentage'] != 0) &
+                    (df['Card_Total_Reviews_Including_Lapses'] > 6)]
 
         fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(16,10))
 
@@ -855,7 +855,7 @@ class read():
             note_types=note_types,
             x1_axis= f'Note_Field_{field}_Stripped_Char_Count',
             x2_axis = f'Note_Field_{field}_Stripped_Word_Count',
-            y_axis = 'Card_Adjusted_Ease_Factor_(%)',
+            y_axis = 'Card_Adjusted_Ease_Factor_As_Percentage',
             x1_label = 'Character Count',
             x2_label = 'Word Count',
             y_label = 'Adjusted Ease Factor [%]'
@@ -868,7 +868,7 @@ class read():
             note_types=note_types,
             x1_axis= f'Note_Field_{field}_Stripped_Char_Count',
             x2_axis = f'Note_Field_{field}_Stripped_Word_Count',
-            y_axis = 'Card_Average_Review_Time_(Seconds)',
+            y_axis = 'Card_Average_Review_Time_In_Seconds',
             x1_label = 'Character Count',
             x2_label = 'Word Count',
             y_label = 'Average Time to Answer [Seconds]'
@@ -879,13 +879,13 @@ class read():
 
         self.base_scatter_2ax(
             note_types=note_types,
-            x1_axis= 'Note_Field_All_Lowest_Frequency_Word',
-            x2_axis = 'Note_Field_All_Lowest_Frequency_Word_(Unigram)',
-            y_axis = 'Card_Adjusted_Ease_Factor_(%)',
-            x1_label = 'Lowest Frequency Word in Note\n(Based on Frequencies in Deck)',
+            x1_axis= 'Note_Field_All_Lowest_Frequency_Word_From_Collection',
+            x2_axis = 'Note_Field_All_Lowest_Frequency_Word_From_Global_Texts',
+            y_axis = 'Card_Adjusted_Ease_Factor_As_Percentage',
+            x1_label = 'Lowest Frequency Word in Note\n(Based on Frequencies in Anki Collection)',
             x2_label = 'Lowest Frequency Word in Note\n(Based on Global Text Frequencies)',
             y_label = 'Adjusted Ease Factor [%]',
-            add_conditional_notna = 'Note_Field_All_Lowest_Frequency_Word_(Unigram)'
+            add_conditional_notna = 'Note_Field_All_Lowest_Frequency_Word_From_Global_Texts'
         )
 
 
@@ -896,16 +896,16 @@ class read():
         #  • zero ease, as that means the card was never reviewed, 
         #    and thus has no data
         #  • < 7 reviews so the fraction_reviews_correct has more data to go on
-        df = df[(df['Card_Adjusted_Ease_Factor_(%)'] != 0) &
-                (df['Card_Total_Reviews_(Including_Lapses)'] > 6)]
+        df = df[(df['Card_Adjusted_Ease_Factor_As_Percentage'] != 0) &
+                (df['Card_Total_Reviews_Including_Lapses'] > 6)]
 
         fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(16,10))
 
         # ----------------------------------------------------------------------
 
         y1 = [
-            df[df['Note_Field_1_Has_Image'] == True]['Card_Adjusted_Ease_Factor_(%)'],
-            df[df['Note_Field_1_Has_Image'] == False]['Card_Adjusted_Ease_Factor_(%)']
+            df[df['Note_Field_1_Has_Image'] == True]['Card_Adjusted_Ease_Factor_As_Percentage'],
+            df[df['Note_Field_1_Has_Image'] == False]['Card_Adjusted_Ease_Factor_As_Percentage']
         ]
 
         ax1.violinplot(y1, showmeans=False, showmedians=True)
@@ -917,8 +917,8 @@ class read():
         # ----------------------------------------------------------------------
 
         y2 = [
-            df[df['Note_Field_2_Has_Image'] == True]['Card_Adjusted_Ease_Factor_(%)'],
-            df[df['Note_Field_2_Has_Image'] == False]['Card_Adjusted_Ease_Factor_(%)']
+            df[df['Note_Field_2_Has_Image'] == True]['Card_Adjusted_Ease_Factor_As_Percentage'],
+            df[df['Note_Field_2_Has_Image'] == False]['Card_Adjusted_Ease_Factor_As_Percentage']
         ]
 
         ax2.violinplot(y2, showmeans=False, showmedians=True)
@@ -934,16 +934,16 @@ class read():
         #  • zero ease, as that means the card was never reviewed, 
         #    and thus has no data
         #  • < 7 reviews so the fraction_reviews_correct has more data to go on
-        df = df[(df['Card_Adjusted_Ease_Factor_(%)'] != 0) &
-                (df['Card_Total_Reviews_(Including_Lapses)'] > 6)]
+        df = df[(df['Card_Adjusted_Ease_Factor_As_Percentage'] != 0) &
+                (df['Card_Total_Reviews_Including_Lapses'] > 6)]
 
         fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(16,10))
 
         # ----------------------------------------------------------------------
 
         y1 = [
-            df[df['Note_Field_1_Has_Image'] == True]['Card_Average_Review_Time_(Seconds)'],
-            df[df['Note_Field_1_Has_Image'] == False]['Card_Average_Review_Time_(Seconds)']
+            df[df['Note_Field_1_Has_Image'] == True]['Card_Average_Review_Time_In_Seconds'],
+            df[df['Note_Field_1_Has_Image'] == False]['Card_Average_Review_Time_In_Seconds']
         ]
 
         ax1.violinplot(y1, showmeans=False, showmedians=True)
@@ -955,8 +955,8 @@ class read():
         # ----------------------------------------------------------------------
 
         y2 = [
-            df[df['Note_Field_2_Has_Image'] == True]['Card_Average_Review_Time_(Seconds)'],
-            df[df['Note_Field_2_Has_Image'] == False]['Card_Average_Review_Time_(Seconds)']
+            df[df['Note_Field_2_Has_Image'] == True]['Card_Average_Review_Time_In_Seconds'],
+            df[df['Note_Field_2_Has_Image'] == False]['Card_Average_Review_Time_In_Seconds']
         ]
 
         ax2.violinplot(y2, showmeans=False, showmedians=True)
