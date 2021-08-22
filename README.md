@@ -39,6 +39,12 @@ db.plot_adjusted_ease_vs_field_length(note_types=['Science (Basic)'])
 ```
 <img width=600 src="https://i.postimg.cc/0yWgFvyW/plot.png">
 
+<br>
+
+### ~ More info at [Documentation.md](./Documentation.md) ~
+
+<br>
+
 ### Other Anki Databases
 (may need to import it into latest version of anki to auto-update the database structure before using it to analyse)
 
