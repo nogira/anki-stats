@@ -1,4 +1,5 @@
 import sqlite3
+from typing import overload
 import pandas as pd
 import numpy as np
 from collections import defaultdict
@@ -181,13 +182,13 @@ class read():
 
 
             # now that freq antry list id complete, form a new col with the list
-            df[col+"_Lowest_Frequency_Word"] = freq_entries
+            df[col+"_Lowest_Frequency_Word_From_Collection"] = freq_entries
             df[col+"_Lowest_Frequency_Word_From_Global_Texts"] = unigram_freq_entries
 
         # do lowest frequency across all cols
-        df["Note_Field_All_Lowest_Frequency_Word"] = df.apply(
+        df["Note_Field_All_Lowest_Frequency_Word_From_Collection"] = df.apply(
             lambda x: min(
-                [x[col+"_Lowest_Frequency_Word"] for col in field_cols]
+                [x[col+"_Lowest_Frequency_Word_From_Collection"] for col in field_cols]
             ),
             axis=1
         )
@@ -745,22 +746,28 @@ class read():
 
             # --------------------------------
 
+                        # filter notetypes
+            df = df[df['Note_Type_Name'].isin(note_types)]
+
+            # filter out cards that will adversly effect adjusted ease factor
+            df = df[(df['Card_Last_Know_Ease_Factor_As_Percentage'] != 0) &
+                    (df['Card_Total_Reviews_Including_Lapses'] > 6)]
+
+            # --------------------------------
+
             # modify ease to get all cards to 85% retention rate (RR)
             # log(desired RR) / log(current RR) = new ease / current ease
             desired_RR = 0.85
             old_ease = df['Card_Last_Know_Ease_Factor_As_Percentage'].to_list()
+            old_retention = df['Card_Reviews_Fraction_Correct'].to_list()
             new_ease = []
-            for ease in old_ease:
-
-                # confirm this is log and not log10 !!
-
-                new_ease.append((math.log(desired_RR) / math.log(desired_RR)) * ease)
+            for ease, retention in zip(old_ease, old_retention):
+                if retention == 1:
+                    ret = 0.90
+                else:
+                    ret = retention
+                new_ease.append((math.log(desired_RR) / math.log(ret)) * ease)
             df['Card_Adjusted_Ease_Factor_As_Percentage'] = new_ease
-
-            # --------------------------------
-
-            # filter notetypes
-            df = df[df['Note_Type_Name'].isin(note_types)]
 
         if cache:
             self.cards_cache = df
@@ -789,12 +796,7 @@ class read():
         #    and thus has no data
         #  • < 7 reviews so the fraction_reviews_correct has more data to go on
         if add_conditional_notna:
-            df = df[(df['Card_Adjusted_Ease_Factor_As_Percentage'] != 0) &
-                    (df['Card_Total_Reviews_Including_Lapses'] > 6) &
-                    (df[add_conditional_notna].notna())]
-        else:
-            df = df[(df['Card_Adjusted_Ease_Factor_As_Percentage'] != 0) &
-                    (df['Card_Total_Reviews_Including_Lapses'] > 6)]
+            df = df[df[add_conditional_notna].notna()]
 
         fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(16,10))
 
