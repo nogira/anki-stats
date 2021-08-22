@@ -61,7 +61,7 @@ db.tbl_graves()
 ```
 
 ```py
-db.tbl_history()
+db.tbl_reviews()
 ```
 
 ```py
@@ -102,7 +102,7 @@ db.cards()        # the combination of the cards table, the notes table
   ```
 
 ```py
-db.history()
+db.reviews()
 ```
 
 ## Plots
