@@ -38,14 +38,14 @@ db.plot_adjusted_ease_vs_field_length(note_types=['Science (Basic)'])
 
 <br>
 
-### Other Anki Databases
+## Other Anki Databases
 (may need to import it into latest version of anki to auto-update the database structure before using it to analyse)
 
 - https://github.com/jpromanonet/myAnkiDataBases
 - https://github.com/hochanh/r-anki
 - add to this list if you know more !
 
-### Roadmap
+## Roadmap
 - Add more features to tables to aid analysis
   - Feautures added thus far:
     - Frequency of word in note field with the lowest frequency
