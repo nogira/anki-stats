@@ -117,15 +117,19 @@ db.plot_adjusted_ease_vs_field_length()
 ```py
 db.plot_average_answer_time_vs_field_length()
 ```
+<img width=600 src="https://i.postimg.cc/zG5KVSfm/plot2.png">
 
 ```py
 db.plot_adjusted_ease_vs_word_frequency()
 ```
+<img width=600 src="https://i.postimg.cc/Pr11XFTz/plot3.png">
 
 ```py
 db.plot_adjusted_ease_if_image_present()
 ```
+<img width=600 src="https://i.postimg.cc/jqpzrr0S/plot4.png">
 
 ```py
 db.plot_answer_time_if_image_present()
 ```
+<img width=600 src="https://i.postimg.cc/gcXv5277/plot5.png">
