@@ -10,29 +10,18 @@ from numpy.polynomial.polynomial import Polynomial
 import math
 from os.path import abspath
 
-# scrap the cache idea for single tables
-# still cache combined tables, but make sure combined tables run their own sql query
+# note: don't try to cache tables; makes notebook slow
 
 # do new adjusted retention rate over last 7 reps instead of over all reps
 
 class read():
 
-    def __init__(self, db_name) -> None:
-        self.db_name = db_name
-
-        self.cards_cache = None
-        self.cards_cache_note_types = None
+    def __init__(self, db_file_path) -> None:
+        self.db_file_path = db_file_path
 
 
-
-
-        # add caches for the rest
-
-
-
-
-    def query_db(self, command):
-        conn = sqlite3.connect(self.db_name)
+    def _query_db(self, command):
+        conn = sqlite3.connect(self.db_file_path)
         c = conn.cursor()
         c.execute(command)
         db = c.fetchall()
@@ -41,7 +30,7 @@ class read():
         return db
 
 
-    def db_to_dict(self, db, df_dict):
+    def _db_to_dict(self, db, df_dict):
         for row in db:
             for entry, key in zip(row, df_dict.keys()):
                     if entry != '':
@@ -52,7 +41,7 @@ class read():
         return df_dict
 
 
-    def get_field_cols(self, df):
+    def _get_field_cols(self, df):
         field_cols = list(df.columns)
         temp_cols = []
         for col in field_cols:
@@ -66,16 +55,13 @@ class read():
         return field_cols
 
 
-    def field_to_words(self, df, regex_remove=None, normal_remove=None):
+    def _field_to_words(self, df, regex_remove=None, normal_remove=None):
         """
         If using own list of things to remove, place the the things you want to 
         remove first first, and the things you want to remove last last.
         """
 
-        field_cols = self.get_field_cols(df)
-
-        for col in field_cols:
-            df[col+'_Has_Image'] =  df[col].str.contains('<img')
+        field_cols = self._get_field_cols(df)
 
         if normal_remove:
             normal_remove = normal_remove
@@ -105,25 +91,33 @@ class read():
             # remove side spaces
             df[new_col] = df[new_col].str.strip()
 
-        reps = 'Card_Total_Reviews_Including_Lapses'
-        lapses = 'Card_Total_Lapses'
-        df['Card_Reviews_Fraction_Correct'] = (df[reps] - df[lapses]) / df[reps]
-        del reps, lapses
+        return df
+
+
+    def _field_features(self, df):
+
+        field_cols = self._get_field_cols(df)
+
+        # col for whether each field has image
+        for col in field_cols:
+            df[col+'_Has_Image'] =  df[col].str.contains('<img')
 
         # create char count and word count cols
         for col in field_cols:
             col = col+"_Stripped"
             df[col+'_Char_Count'] = df[col].str.len()
             df[col+'_Word_Count'] = df[col].str.count(r'\s') + 1
+        
+        df = self._word_frequency(df)
 
         return df
 
 
-    def word_frequency(self, df):
+    def _word_frequency(self, df):
 
         word_count = defaultdict(int)
 
-        field_cols = self.get_field_cols(df)
+        field_cols = self._get_field_cols(df)
         
         # count the words in every field
         for col in field_cols:
@@ -201,6 +195,43 @@ class read():
 
         return df
 
+
+    def _get_adjusted_ease(self, df):
+        """
+        Modify ease to get all cards to a constant retention rate (RR), using 
+        the formula:
+
+        log(desired RR) / log(current RR) = new ease / current ease
+        """
+
+        # was getting warning about setting values on copy of slice; this fixes that
+        df = df.copy()
+
+        # filter out cards that will adversly effect adjusted ease factor
+        df = df[(df['Card_Last_Know_Ease_Factor_As_Percentage'] != 0) &
+                (df['Card_Total_Reviews_Including_Lapses'] > 6)]
+
+        reps = 'Card_Total_Reviews_Including_Lapses'
+        lapses = 'Card_Total_Lapses'
+        df['Card_Reviews_Fraction_Correct'] = (df[reps] - df[lapses]) / df[reps]
+
+        # 85% retention rate
+        desired_RR = 0.85
+        old_ease = df['Card_Last_Know_Ease_Factor_As_Percentage'].to_list()
+        old_retention = df['Card_Reviews_Fraction_Correct'].to_list()
+        new_ease = []
+        for ease, retention in zip(old_ease, old_retention):
+            if retention > 0.9:
+                ret = 0.9
+            else:
+                ret = retention
+            new_ease.append((math.log(desired_RR) / math.log(ret)) * ease)
+
+        df['Card_Adjusted_Ease_Factor_As_Percentage'] = new_ease
+
+        return df
+
+
     # --------------------------------------------------------------------------
 
 
@@ -214,7 +245,7 @@ class read():
         FROM cards
         '''
 
-        db = self.query_db(command)
+        db = self._query_db(command)
 
         df_dict = {
             'Card_ID':[],
@@ -224,7 +255,7 @@ class read():
             'Card_Time_Last_Modified':[],
             'Card_Type':[],
             'Card_Queue':[],
-            'Card_Due':[],
+            'Card_Due_Time':[],
             'Card_Current_Interval_In_Minutes':[],
             'Card_Ease_Factor_As_Percentage':[],
             'Card_Total_Reviews_Including_Lapses':[],
@@ -234,7 +265,7 @@ class read():
             'Card_Flags':[]                             # should prob convert nums to colors
         }
 
-        df_dict = self.db_to_dict(db, df_dict)
+        df_dict = self._db_to_dict(db, df_dict)
         df = pd.DataFrame(df_dict)
 
         # unix time -> normal time
@@ -282,6 +313,24 @@ class read():
             lambda x: (abs(x) / 60) if x < 0 else (x * 24 * 60)
         )                                       # day->hr->min
 
+        # CONVERT DUE COL TO DUE DATE
+        # -- Due is used differently for different card types: 
+        # --   new: note id or random int
+        # --   due: integer day, relative to the collection's creation time
+        # --   learning: integer timestamp in second
+        collection_create_time = self.tbl_collections()['Collection_Creation_Time'][0]
+        def due_to_due_date(row):
+            if row['Card_Type'] == 'New':
+                row['Card_Due_Time'] = np.nan
+
+            elif row['Card_Type'] == 'Learning' or row['Card_Type'] == 'Relearning':
+                row['Card_Due_Time'] = pd.to_datetime(row['Card_Due_Time'],unit='s')
+
+            else:
+                row['Card_Due_Time'] = collection_create_time + pd.Timedelta(f"{row['Card_Due_Time']} days")
+
+            return row
+        df = df.apply(due_to_due_date, axis=1)
 
         return df
 
@@ -297,7 +346,7 @@ class read():
         FROM col
         '''
 
-        db = self.query_db(command)
+        db = self._query_db(command)
 
         df_dict = {
             'Collection_Creation_Time':[],
@@ -312,12 +361,15 @@ class read():
             'Collection_Tags':[]
         }
 
-        df_dict = self.db_to_dict(db, df_dict)
+        df_dict = self._db_to_dict(db, df_dict)
 
         df = pd.DataFrame(df_dict)
 
         # convert sec to date/time
-        df['Collection_Time_Last_Modified'] = pd.to_datetime(df['Collection_Time_Last_Modified'],unit='s').to_numpy()
+        df['Collection_Creation_Time'] = pd.to_datetime(df['Collection_Creation_Time'],unit='s').to_numpy()
+
+        # convert milisec to date/time
+        df['Collection_Time_Last_Modified'] = pd.to_datetime(df['Collection_Time_Last_Modified'],unit='ms').to_numpy()
 
         return df
 
@@ -330,7 +382,7 @@ class read():
         FROM config
         '''
 
-        db = self.query_db(command)
+        db = self._query_db(command)
 
         df_dict = {
             'Config_Key':[],
@@ -338,7 +390,7 @@ class read():
             'Config_Value':[]
         }
 
-        df_dict = self.db_to_dict(db, df_dict)
+        df_dict = self._db_to_dict(db, df_dict)
 
         return pd.DataFrame(df_dict)
 
@@ -351,7 +403,7 @@ class read():
         FROM deck_config
         '''
 
-        db = self.query_db(command)
+        db = self._query_db(command)
 
         df_dict = {
             'Deck_ID':[],
@@ -360,7 +412,7 @@ class read():
             'Deck_Config':[]
         }
 
-        df_dict = self.db_to_dict(db, df_dict)
+        df_dict = self._db_to_dict(db, df_dict)
 
         df = pd.DataFrame(df_dict)
 
@@ -382,7 +434,7 @@ class read():
         FROM decks
         '''
 
-        db = self.query_db(command)
+        db = self._query_db(command)
 
         df_dict = {
             'Deck_ID':[],
@@ -392,7 +444,7 @@ class read():
             'Deck_Kind':[]
         }
 
-        df_dict = self.db_to_dict(db, df_dict)
+        df_dict = self._db_to_dict(db, df_dict)
 
         df = pd.DataFrame(df_dict)
 
@@ -414,7 +466,7 @@ class read():
         FROM FIELDS
         '''
 
-        db = self.query_db(command)
+        db = self._query_db(command)
 
         df_dict = {
             'Note_Type_ID':[],
@@ -423,7 +475,7 @@ class read():
             'Note_Field_Config':[]
         }
 
-        df_dict = self.db_to_dict(db, df_dict)
+        df_dict = self._db_to_dict(db, df_dict)
 
         df = pd.DataFrame(df_dict)
 
@@ -446,14 +498,14 @@ class read():
         FROM FIELDS
         '''
 
-        db = self.query_db(command)
+        db = self._query_db(command)
 
         df_dict = {
             'Grave_Original_ID':[],
             'Grave_Type':[]
         }
 
-        df_dict = self.db_to_dict(db, df_dict)
+        df_dict = self._db_to_dict(db, df_dict)
 
         df = pd.DataFrame(df_dict)
 
@@ -463,47 +515,15 @@ class read():
         return df
 
 
-    def tbl_reviews(self, extra_features=False):
+    def tbl_reviews(self):
         """Get the Review History Table From Database"""
 
-        if extra_features:
-            command = '''
-            WITH last_known_ease AS (
-                    SELECT
-                        DISTINCT cid,
-                        LAST_VALUE(revlog.factor)
-                            OVER (
-                                PARTITION BY revlog.cid
-                                ROWS BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING
-                            ) AS ease
-                    FROM revlog
-                ),
-
-                revlog_avg_times AS (
-                    SELECT cid, AVG(time) AS avg_time
-                    FROM revlog
-                    GROUP BY cid
-                )
-            
-
-
-            SELECT revlog.id, revlog.cid, revlog.ease, revlog.ivl,
-                revlog.lastIvl, revlog.factor, revlog.time, revlog.type,
-                last_known_ease.ease, revlog_avg_times.avg_time
-            FROM revlog
-                JOIN last_known_ease
-                    ON revlog.cid = last_known_ease.cid
-                JOIN revlog_avg_times
-                    ON revlog.cid = revlog_avg_times.cid
-            '''
-
-        else:
-            command = '''
+        command = '''
             SELECT id, cid, ease, ivl, lastIvl, factor, time, type
             FROM revlog
             '''
 
-        db = self.query_db(command)
+        db = self._query_db(command)
 
         df_dict = {
             'Review_ID':[],
@@ -516,11 +536,7 @@ class read():
             'Review_Type':[]
         }
 
-        if extra_features:
-            df_dict['Card_Last_Know_Ease_Factor_As_Percentage'] = []
-            df_dict['Card_Average_Review_Time_In_Seconds'] = []
-
-        df_dict = self.db_to_dict(db, df_dict)
+        df_dict = self._db_to_dict(db, df_dict)
 
         df = pd.DataFrame(df_dict)
 
@@ -530,8 +546,6 @@ class read():
 
         # divide ease by ten to get to percentage
         df['Review_New_Ease_Factor_As_Percentage'] = df['Review_New_Ease_Factor_As_Percentage'] / 10
-        if extra_features:
-            df['Card_Last_Know_Ease_Factor_As_Percentage'] = df['Card_Last_Know_Ease_Factor_As_Percentage'] / 10
 
         # convert review type as integer to review type as string
         # 0=learn, 1=review, 2=relearn, 3=cram
@@ -561,10 +575,6 @@ class read():
         # convert time to seconds
         df['Review_Time_To_Answer_In_Seconds'] = df['Review_Time_To_Answer_In_Seconds'] / 1000
 
-        if extra_features:
-            df['Card_Average_Review_Time_In_Seconds'] = df['Card_Average_Review_Time_In_Seconds'] / 1000
-
-
         return  df
 
 
@@ -576,7 +586,7 @@ class read():
         FROM notetypes
         '''
 
-        db = self.query_db(command)
+        db = self._query_db(command)
 
         df_dict = {
             'Note_Type_ID':[],
@@ -585,7 +595,7 @@ class read():
             'Note_Type_Config':[]
         }
 
-        df_dict = self.db_to_dict(db, df_dict)
+        df_dict = self._db_to_dict(db, df_dict)
         df = pd.DataFrame(df_dict)
 
         # unix time -> normal time
@@ -606,7 +616,7 @@ class read():
         FROM templates
         '''
 
-        db = self.query_db(command)
+        db = self._query_db(command)
 
         df_dict = {
             'Note_Type_ID':[],
@@ -616,7 +626,7 @@ class read():
             'Note_Template_Config':[]
         }
 
-        df_dict = self.db_to_dict(db, df_dict)
+        df_dict = self._db_to_dict(db, df_dict)
         df = pd.DataFrame(df_dict)
 
         # unix time -> normal time
@@ -637,7 +647,7 @@ class read():
         FROM notes
         '''
 
-        db = self.query_db(command)
+        db = self._query_db(command)
 
         df_dict = {
             'Note_ID':[],
@@ -648,7 +658,7 @@ class read():
             'Note_Fields':[]
         }
 
-        df_dict = self.db_to_dict(db, df_dict)
+        df_dict = self._db_to_dict(db, df_dict)
         df = pd.DataFrame(df_dict)
 
         # unix time -> normal time
@@ -688,10 +698,77 @@ class read():
         return df
 
 
+    # ----------------------SQL QUERIES FOR EXTRA FEATURES----------------------
+
+
+    def _extra_card_features_from_reviews(self):
+        command = '''
+            WITH
+                last_known AS (
+                    SELECT
+                        DISTINCT cid,
+                        LAST_VALUE(revlog.factor)
+                            OVER (
+                                PARTITION BY revlog.cid
+                                ROWS BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING
+                            ) AS ease,
+                        LAST_VALUE(revlog.ivl)
+                            OVER (
+                                PARTITION BY revlog.cid
+                                ROWS BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING
+                            ) AS ivl
+                    FROM revlog
+                ),
+
+                revlog_avg_times AS (
+                    SELECT cid, AVG(time) AS avg_time
+                    FROM revlog
+                    GROUP BY cid
+                )
+            
+            SELECT 
+                last_known.cid,
+                last_known.ease,
+                last_known.ivl,
+                revlog_avg_times.avg_time
+            FROM last_known
+                JOIN revlog_avg_times
+                    ON last_known.cid = revlog_avg_times.cid
+            '''
+        
+        db = self._query_db(command)
+
+        df_dict = {
+            'Card_ID':[],
+            'Card_Last_Know_Ease_Factor_As_Percentage':[],
+            'Card_Last_Know_Interval_In_Minutes':[],
+            'Card_Average_Review_Time_In_Seconds':[]
+        }
+
+        df_dict = self._db_to_dict(db, df_dict)
+
+        df = pd.DataFrame(df_dict)
+
+        # unix time -> normal time
+        df['Card_ID'] = pd.to_datetime(df['Card_ID'],unit='ms').to_numpy()
+
+        df['Card_Last_Know_Ease_Factor_As_Percentage'] = df['Card_Last_Know_Ease_Factor_As_Percentage'] / 10
+
+        # convert intervals to minute timescale
+        col = 'Card_Last_Know_Interval_In_Minutes'
+        df[col] = df[col].apply(
+            lambda x: (abs(x) / 60) if x < 0 else (x * 24 * 60)
+        )                                       # day->hr->min
+
+        df['Card_Average_Review_Time_In_Seconds'] = df['Card_Average_Review_Time_In_Seconds'] / 1000
+
+        return df
+
+
     # --------------------------------------------------------------------------
 
 
-    def reviews(self, extra_features=False, num_fields=None):
+    def reviews(self, num_fields=None):
         """
         Get the Review History Table, and Join the Cards Table & Notes Table onto It
         """
@@ -702,8 +779,9 @@ class read():
 
         # are there any other tables that should be merged??
 
-        if extra_features:
-            df = self.field_to_words(df)
+        # extra features
+        df = self._field_to_words(df)
+        df = self._field_features(df)
 
         return df
 
@@ -713,65 +791,26 @@ class read():
         note_types,
         num_fields=None,
         regex_remove=None,
-        normal_remove=None,
-        cache=False):
+        normal_remove=None):
         """
         Get the Review History Table, and Join the Cards Table & Notes Table onto It
         """
 
-        # query database if no df in cache, or if df in cache has wrong note-types
-        if not(self.cards_cache) or self.cards_cache_note_types != note_types:
-            df = pd.merge(
-                self.tbl_cards(),
-                self.tbl_reviews(extra_features=True)[[
-                    'Card_ID', 'Card_Last_Know_Ease_Factor_As_Percentage',
-                    'Card_Average_Review_Time_In_Seconds'
-                ]],
-                on="Card_ID"
-            )
-            df = pd.merge(df, self.tbl_notes(num_fields=num_fields), on="Note_ID")
-            df = pd.merge(df, self.tbl_note_types(), on="Note_Type_ID")
+        df = pd.merge(self.tbl_cards(),self._extra_card_features_from_reviews(),on="Card_ID")
+        df = pd.merge(df, self.tbl_notes(num_fields=num_fields), on="Note_ID")
+        df = pd.merge(df, self.tbl_note_types(), on="Note_Type_ID")
 
-            # are there any other tables that should be merged??
+                    # are there any other tables that should be merged??
 
-            # --------------------------------
+        # filter notetypes
+        df = df[df['Note_Type_Name'].isin(note_types)]
 
-            # extra_features:
-            df = self.field_to_words(
-                df,
-                regex_remove=regex_remove,
-                normal_remove=normal_remove
-            )
-            df = self.word_frequency(df)
+        # --------------------------------
 
-            # --------------------------------
-
-                        # filter notetypes
-            df = df[df['Note_Type_Name'].isin(note_types)]
-
-            # filter out cards that will adversly effect adjusted ease factor
-            df = df[(df['Card_Last_Know_Ease_Factor_As_Percentage'] != 0) &
-                    (df['Card_Total_Reviews_Including_Lapses'] > 6)]
-
-            # --------------------------------
-
-            # modify ease to get all cards to 85% retention rate (RR)
-            # log(desired RR) / log(current RR) = new ease / current ease
-            desired_RR = 0.85
-            old_ease = df['Card_Last_Know_Ease_Factor_As_Percentage'].to_list()
-            old_retention = df['Card_Reviews_Fraction_Correct'].to_list()
-            new_ease = []
-            for ease, retention in zip(old_ease, old_retention):
-                if retention == 1:
-                    ret = 0.90
-                else:
-                    ret = retention
-                new_ease.append((math.log(desired_RR) / math.log(ret)) * ease)
-            df['Card_Adjusted_Ease_Factor_As_Percentage'] = new_ease
-
-        if cache:
-            self.cards_cache = df
-            self.cards_cache_note_types = note_types
+        # extra features
+        df = self._field_to_words(df,regex_remove=regex_remove,normal_remove=normal_remove)
+        df = self._field_features(df)
+        df = self._get_adjusted_ease(df)
 
         return df
 
@@ -966,6 +1005,12 @@ class read():
         ax2.set_xticks([1, 2])
         ax2.set_xticklabels(['True', 'False'])
 
+
+    # -----------------------------SIMULATION-----------------------------------
+
+
+    def simulation(self):
+        pass
 
 
 
