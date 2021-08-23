@@ -89,7 +89,7 @@ db.cards()        # the combination of the cards table, the notes table
     
     Which is derived from the equation of [the forgetting curve](https://supermemo.guru/wiki/Forgetting_curve):
     
-    <img width="90" src="https://render.githubusercontent.com/render/math?math=R = \text{e}^{-t/s}">
+    <img width="90" src="https://render.githubusercontent.com/render/math?math=R = \exp(\frac{-t}{s})">
 
   ```py
   'Note_Field_<x>_Lowest_Frequency_Word_From_Collection'     # where <x> is the number of the field (e.g. <x> = 1)
