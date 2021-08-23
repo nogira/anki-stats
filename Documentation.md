@@ -112,6 +112,7 @@ db.reviews()
 ```py
 db.plot_adjusted_ease_vs_field_length()
 ```
+<img width=600 src="https://i.postimg.cc/4y9VhWtG/plot1.png">
 
 ```py
 db.plot_average_answer_time_vs_field_length()
