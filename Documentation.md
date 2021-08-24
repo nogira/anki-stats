@@ -138,6 +138,6 @@ db.plot_answer_time_if_image_present()
 ```py
 db.stats_lapse_retention()
 # -> Right: 1663
-     Wrong: 0
-     Fraction Correct: 1.0
+#    Wrong: 0
+#    Fraction Correct: 1.0
 ```
