@@ -11,7 +11,7 @@ pip install ankistats
 ```
 #### Dependencies
 - pandas
-- matplotlib
+- seaborn
 
 ## Use
 Copy your anki database (`collection.anki2`) from its folder.
