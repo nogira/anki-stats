@@ -911,7 +911,7 @@ class read():
 
         print("Right:", right_count)
         print("Wrong:", wrong_count)
-        print("Percentage Correct:", right_count / (right_count + wrong_count))
+        print("Fraction Correct:", right_count / (right_count + wrong_count))
 
 
     # --------------------------------------------------------------------------
