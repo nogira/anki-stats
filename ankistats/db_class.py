@@ -1,3 +1,29 @@
+# ------------------------------------------------------------------------------
+#
+# MIT License
+#
+# Copyright (c) 2021 nogira
+#
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to deal
+# in the Software without restriction, including without limitation the rights
+# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+# copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
+#
+# The above copyright notice and this permission notice shall be included in all
+# copies or substantial portions of the Software.
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+# SOFTWARE.
+#
+# ------------------------------------------------------------------------------
+
 import sqlite3
 from typing import overload
 import pandas as pd
@@ -7,8 +33,10 @@ import re
 import matplotlib.pyplot as plt
 from matplotlib.offsetbox import AnchoredText
 from numpy.polynomial.polynomial import Polynomial
-import math
 from os.path import abspath
+import random
+
+import seaborn as sns
 
 # note: don't try to cache tables; makes notebook slow
 
@@ -30,7 +58,11 @@ class read():
         return db
 
 
-    def _db_to_dict(self, db, df_dict):
+    def _db_to_dict(
+        self,
+        db,
+        df_dict
+        ):
         for row in db:
             for entry, key in zip(row, df_dict.keys()):
                     if entry != '':
@@ -55,7 +87,12 @@ class read():
         return field_cols
 
 
-    def _field_to_words(self, df, regex_remove=None, normal_remove=None):
+    def _field_to_words(
+        self,
+        df,
+        regex_remove=None,
+        normal_remove=None
+        ):
         """
         If using own list of things to remove, place the the things you want to 
         remove first first, and the things you want to remove last last.
@@ -225,7 +262,7 @@ class read():
                 ret = 0.9
             else:
                 ret = retention
-            new_ease.append((math.log(desired_RR) / math.log(ret)) * ease)
+            new_ease.append((np.log(desired_RR) / np.log(ret)) * ease)
 
         df['Card_Adjusted_Ease_Factor_As_Percentage'] = new_ease
 
@@ -788,10 +825,11 @@ class read():
 
     def cards(
         self,
-        note_types,
+        note_types=None,
         num_fields=None,
         regex_remove=None,
-        normal_remove=None):
+        normal_remove=None
+        ):
         """
         Get the Review History Table, and Join the Cards Table & Notes Table onto It
         """
@@ -803,7 +841,8 @@ class read():
                     # are there any other tables that should be merged??
 
         # filter notetypes
-        df = df[df['Note_Type_Name'].isin(note_types)]
+        if note_types:
+            df = df[df['Note_Type_Name'].isin(note_types)]
 
         # --------------------------------
 
@@ -825,9 +864,17 @@ class read():
     # ---------------------------------BASE-------------------------------------
 
 
-    def base_scatter_2ax(self, note_types, x1_axis, x2_axis, y_axis,
-                         x1_label, x2_label, y_label,
-                         add_conditional_notna=None):
+    def base_scatter_2ax(
+        self,
+        note_types,
+        x1_axis,
+        x2_axis,
+        y_axis,
+        x1_label,
+        x2_label,
+        y_label,
+        add_conditional_notna=None
+        ):
         df = self.cards(note_types=note_types)
 
         # filter out rows with:
@@ -890,7 +937,11 @@ class read():
     # --------------------------------PLOTS-------------------------------------
 
 
-    def plot_adjusted_ease_vs_field_length(self, note_types: list, field: int = 2):
+    def plot_adjusted_ease_vs_field_length(
+        self,
+        note_types: list,
+        field: int = 2
+        ):
         
         self.base_scatter_2ax(
             note_types=note_types,
@@ -903,7 +954,11 @@ class read():
         )
 
 
-    def plot_average_answer_time_vs_field_length(self, note_types: list, field: int = 2):
+    def plot_average_answer_time_vs_field_length(
+        self,
+        note_types: list,
+        field: int = 2
+        ):
 
         self.base_scatter_2ax(
             note_types=note_types,
@@ -916,7 +971,11 @@ class read():
         )
 
 
-    def plot_adjusted_ease_vs_word_frequency(self, note_types: list, field: int = 2):
+    def plot_adjusted_ease_vs_word_frequency(
+        self,
+        note_types: list,
+        field: int = 2
+        ):
 
         self.base_scatter_2ax(
             note_types=note_types,
@@ -1009,8 +1068,446 @@ class read():
     # -----------------------------SIMULATION-----------------------------------
 
 
-    def simulation(self):
-        pass
+    def _simulation(
+        self,
+        days,
+        X_ease,
+        X_retention,
+        X_due,
+        X_interval, 
+        new_cards_per_day,
+        plot_sim=True,
+        seed=1
+        ):
+        len_X = len(X_ease)
+        cards = {i: {'ease': E, 'retention': R,'due': D, 'interval': I}
+                    for i, E, R, D, I in zip(
+                        range(len_X),
+                        X_ease,
+                        X_retention,
+                        X_due,
+                        X_interval
+                    )}
+        assert 0 in cards, f"Error: {cards}"
+
+        # create a set of real-world card 'ease: retention' pairs to 
+        # create/select new cards from
+        new_card_pool = [(x['ease'], x['retention']) for x in cards.values()]
+
+        np.random.seed(seed)
+        random.seed(seed)
+
+        def is_correct(card: dict) -> bool:
+            """Check if card is correct"""
+            #  gen rand num between 0 and 1 (uniform probability)
+            rand = np.random.rand(1)
+            return rand < cards[card]['retention']
+
+        all_daily_reps = []
+
+        for d in range(days):   #---------------- 1 LOOP PER DAY ---------------
+
+            # add new cards to dict
+            num_cards = len(cards)
+            for i in range(new_cards_per_day):
+                card_sample = random.sample(new_card_pool, k=1)[0]
+                cards[i+num_cards] = {
+                    'ease': card_sample[0],
+                    'retention': card_sample[1],
+                    'due': 0,
+                    'interval': 0
+                }
+
+            # re-get number of cards so can loop through all
+            num_cards = len(cards)
+
+            for i in range(num_cards):   # --------- 1 LOOP PER CARD ---------------
+                
+                if cards[i]['due'] == 0:
+
+                    # if new card, ignore correct/false since you review new 
+                    # cards until remember
+                    if cards[i]['interval'] == 0:
+
+                        cards[i]['interval'] = 1
+                        cards[i]['due'] = 1
+
+                        # ----------track reps----------
+                        # add 2 reps since learning
+                        all_daily_reps += [d, d]
+
+                    else:
+                        # ----------track reps----------
+                        all_daily_reps += [d]
+
+                        # ---------- if card correct----------
+                        if is_correct(i):
+                            # need to round up so when cards < 200 ease have review 
+                                # after 1 day interval, they don't get stuck in the 
+                                # real ease hell
+                            new_interval = int(np.ceil(cards[i]['interval'] * cards[i]['ease']))
+                            cards[i]['interval'] = new_interval
+                            cards[i]['due'] = new_interval
+                        
+                        # ---------- if card false----------
+                        else:
+                            cards[i]['interval'] = 1
+                            cards[i]['due'] = 1
+
+                            # ----tracking-----
+                            # add another rep bc relearning
+                            all_daily_reps += [d]
+
+
+                # increment day of card by 1
+                cards[i]['due'] -= 1
+
+        if plot_sim:
+            plt.figure(figsize=(16,10))
+
+            plot = sns.histplot(all_daily_reps)
+            # plt.title(f"Retention Rate {retention}, Ease Variable")
+            plt.ylabel("Number of Reviews", fontsize=18)
+            plt.xlabel("Days in the Future", fontsize=18)
+
+            at = AnchoredText(
+                f"Total Reps = {len(all_daily_reps)}",
+                prop=dict(size=16), frameon=True,loc='upper right',
+            )
+            plot.add_artist(at)
+
+        else:
+            return len(all_daily_reps)
+
+
+    def _calculate_adjusted_ease(
+        self,
+        df,
+        new_retention,
+        retention_cap
+        ) -> list:
+
+        old_eases = (df['Card_Last_Know_Ease_Factor_As_Percentage'] / 100).to_list()
+        old_retentions = df['Card_Reviews_Fraction_Correct'].to_list()
+
+        new_eases = []
+        for old_ease, old_ret in zip(old_eases, old_retentions):
+            # to prevent the equation altering high retention cards too 
+            # aggressively, cap the retention adjustment
+            if old_ret > retention_cap: old_ret = retention_cap
+
+            new_eases.append((np.log(new_retention) / np.log(old_ret)) * old_ease)
+
+        return new_eases
+
+
+    def _calculate_adjusted_retention(
+        self,
+        df,
+        new_ease,
+        retention_cap
+        ) -> list:
+
+        old_eases = (df['Card_Last_Know_Ease_Factor_As_Percentage'] / 100).to_list()
+        old_retentions = df['Card_Reviews_Fraction_Correct'].to_list()
+
+        new_retentions = []
+        for old_ease, old_ret in zip(old_eases, old_retentions):
+            # to prevent the equation altering high retention cards too 
+            # aggressively, cap the retention adjustment
+            if old_ret > retention_cap: old_ret = retention_cap
+
+            new_retentions.append(np.exp((new_ease/old_ease) * np.log(old_ret)))
+
+        return new_retentions
+
+
+    def _simulate_init(self):
+        df = self.cards()
+
+        df = df[df.Card_Queue != 'Suspended']
+
+        time_diff = df['Card_Due_Time'] - pd.Timestamp.now()
+        X_due = time_diff.dt.days
+        X_interval = df['Card_Last_Know_Interval_In_Minutes'] / 60 / 24
+
+        len_X = len(X_due)
+
+        return df, X_due, X_interval, len_X
+
+
+    def simulate_no_changes(
+        self,
+        days=365,
+        new_cards_per_day=0
+        ):
+        df, X_due, X_interval, len_X = self._simulate_init()
+
+        X_ease = (df.Card_Last_Know_Ease_Factor_As_Percentage / 100).to_list()
+        X_retention = df.Card_Reviews_Fraction_Correct.to_list()
+
+        self._simulation(days, X_ease, X_retention, X_due, X_interval, new_cards_per_day)
+
+
+    def simulate_uniform_retention(
+        self,
+        retention,
+        retention_cap=0.9,
+        days=365,
+        new_cards_per_day=0
+        ):
+        df, X_due, X_interval, len_X = self._simulate_init()
+
+        X_ease = self._calculate_adjusted_ease(df, retention, retention_cap)
+        X_retention = [retention for _ in range(len_X)]
+
+        self._simulation(days, X_ease, X_retention, X_due, X_interval, new_cards_per_day)
+
+
+    def simulate_uniform_ease(
+        self,
+        ease,
+        retention_cap=0.9,
+        days=365,
+        new_cards_per_day=0
+        ):
+        df, X_due, X_interval, len_X = self._simulate_init()
+
+        # convert ease from % to multiplier
+        ease = ease / 100
+
+        X_ease = [ease for _ in range(len_X)]
+        X_retention = self._calculate_adjusted_retention(df, ease, retention_cap)
+
+        self._simulation(days, X_ease, X_retention, X_due, X_interval, new_cards_per_day)
+
+
+    def _simulate_uniform_ease_uniform_retention_from_scratch(
+        self,
+        ease,
+        retention, 
+        days=365,
+        new_cards_per_day=5,
+        seed=1
+        ):
+        # convert ease from % to multiplier
+        ease = ease / 100
+
+        X_ease = [ease]
+        X_retention = [retention]
+        X_due = [0]
+        X_interval = [0]
+
+        reps = self._simulation(days, X_ease, X_retention, X_due, X_interval, 
+                                new_cards_per_day, plot_sim=False, seed=seed)
+        return reps
+
+
+    def simulate_optimal_ease_per_memory_strength_from_scratch(
+        self,
+        ease,
+        retention,
+        days=365, 
+        new_cards_per_day=5,
+        min_retention=0.6,
+        max_retention=0.9
+        ):
+        """
+        Perform a simulation to work out the optimal retention rate (and thus 
+        ease factor) for each memory strength value, defined as:
+
+        memory_strength = - ease_factor / ln(retention_rate)
+        """
+        min = int(min_retention * 1000)
+        max = int(max_retention * 1000)
+        retention_range = [x / 1000  for x in range(min, max, 1)]
+
+        reps_tracker = []
+        for new_retention in retention_range:
+            new_ease = (np.log(new_retention) / np.log(retention)) * ease
+
+            reps_tracker += [
+                self._simulate_uniform_ease_uniform_retention_from_scratch(
+                    new_ease, new_retention, days=days, new_cards_per_day=new_cards_per_day)
+            ]
+
+        plt.figure(figsize=(16,10))
+        plt.plot(retention_range, reps_tracker,
+            label=f"Memory Strength of {ease}% Ease, {int(retention * 100)}% Retention",
+            color="#B06DD8")
+        plt.xlabel("Retention Rate", fontsize=18)
+        plt.ylabel("Number of Reviews", fontsize=18)
+        plt.title("Number of Simulated Reps Per Retention Rate after a Period of Days", fontsize=22)
+        plt.legend(loc=9, fontsize=16)
+
+
+    # --------------------------------------------------------------------------
+
+
+    #                         non-generalised plots
+
+
+    # db.simulate_optimal_ease_per_memory_strength(250, 0.85, days=365, new_cards_per_day=5)
+
+
+    # def simulate_optimal_ease_per_memory_strength(self, ease, retention, days=365, 
+    #                                                         new_cards_per_day=5):
+    #     # min_retention = 0.600
+    #     # max_retention = 0.949
+    #     retention_range = [x / 1000  for x in range(600, 900, 1)]
+
+    #     reps_tracker1 = []
+    #     reps_tracker2 = []
+    #     reps_tracker3 = []
+    #     for new_retention in retention_range:
+    #         new_ease = (np.log(new_retention) / np.log(retention)) * ease
+
+    #         reps_tracker1 += [
+    #             self._simulate_uniform_ease_uniform_retention_from_scratch(
+    #                 new_ease, new_retention, days=days, new_cards_per_day=new_cards_per_day, seed=1
+    #             )
+    #         ]
+    #         reps_tracker2 += [
+    #             self._simulate_uniform_ease_uniform_retention_from_scratch(
+    #                 new_ease, new_retention, days=50, new_cards_per_day=new_cards_per_day, seed=1
+    #             )
+    #         ]
+    #         reps_tracker3 += [
+    #             self._simulate_uniform_ease_uniform_retention_from_scratch(
+    #                 new_ease, new_retention, days=100, new_cards_per_day=new_cards_per_day, seed=1
+    #             )
+    #         ]
+
+    #     plt.figure(figsize=(16,10))
+    #     plt.plot(retention_range, reps_tracker1, label="365 Days", color="#B06DD8")
+    #     plt.xlabel("Retention Rate", fontsize=18)
+    #     plt.ylabel("Number of Reviews", fontsize=18)
+    #     plt.title("Number of Simulated Reps Per Retention Rate after a Period of Days\nFor Cards at Memory Strength of 250% Ease, 85% Retention", fontsize=22)
+    #     plt.yticks(color="#B06DD8")   # blue
+    #     plt.twinx()
+    #     plt.plot(retention_range, reps_tracker3, label="100 Days", color="#D86D6D")
+    #     plt.yticks(color="#D86D6D")   # red
+    #     plt.ylim(top=5000)
+    #     plt.twinx()
+    #     plt.plot(retention_range, reps_tracker2, label="50 Days", color="#D8D06D")
+    #     plt.yticks(color="#D8D06D")   # yellow
+    #     plt.ylim(top=2100)
+    #     plt.plot([], [], label="100 Days", color="#D86D6D")
+    #     plt.plot([], [], label="365 Days", color="#B06DD8")
+    #     plt.legend(loc=9, fontsize=16)
+
+
+    # def simulate_optimal_ease_per_memory_strength(self, ease, retention, days=365, 
+    #                                                         new_cards_per_day=5):
+    #     # min_retention = 0.600
+    #     # max_retention = 0.949
+    #     retention_range = [x / 1000  for x in range(600, 900, 1)]
+
+    #     reps_tracker1 = []
+    #     reps_tracker2 = []
+    #     for new_retention in retention_range:
+    #         new_ease = (np.log(new_retention) / np.log(retention)) * ease
+
+    #         reps_tracker1 += [
+    #             self._simulate_uniform_ease_uniform_retention_from_scratch(
+    #                 new_ease, new_retention, days=100, new_cards_per_day=new_cards_per_day, seed=1
+    #             )
+    #         ]
+    #         reps_tracker2 += [
+    #             self._simulate_uniform_ease_uniform_retention_from_scratch(
+    #                 new_ease, new_retention, days=100, new_cards_per_day=new_cards_per_day, seed=100
+    #             )
+    #         ]
+
+    #     plt.figure(figsize=(16,10))
+    #     plt.plot(retention_range, reps_tracker1, label="Seed = 100", color="#B06DD8")
+    #     plt.xlabel("Retention Rate", fontsize=18)
+    #     plt.ylabel("Number of Reviews", fontsize=18)
+    #     plt.title("Number of Simulated Reps Per Retention Rate after a Period of Days\nFor Cards at Memory Strength of 250% Ease, 85% Retention", fontsize=22)
+    #     plt.yticks(color="#B06DD8")   # blue
+    #     plt.twinx()
+    #     plt.plot(retention_range, reps_tracker2, label="Seed = 1", color="#D8D06D")
+    #     plt.yticks(color="#D8D06D")   # yellow
+    #     plt.plot([], [], label="Seed = 100", color="#B06DD8")
+    #     plt.legend(loc=9, fontsize=16)
+
+
+    # def simulate_optimal_ease_per_memory_strength(self, ease, retention, days=365, 
+    #                                                         new_cards_per_day=5):
+    #     # min_retention = 0.600
+    #     # max_retention = 0.949
+    #     retention_range = [x / 1000  for x in range(600, 900, 1)]
+
+    #     reps_tracker1 = []
+    #     reps_tracker2 = []
+    #     for new_retention in retention_range:
+    #         new_ease = (np.log(new_retention) / np.log(retention)) * ease
+
+    #         reps_tracker1 += [
+    #             self._simulate_uniform_ease_uniform_retention_from_scratch(
+    #                 new_ease, new_retention, days=100, new_cards_per_day=5, seed=1
+    #             )
+    #         ]
+    #         reps_tracker2 += [
+    #             self._simulate_uniform_ease_uniform_retention_from_scratch(
+    #                 new_ease, new_retention, days=100, new_cards_per_day=10, seed=1
+    #             )
+    #         ]
+
+    #     plt.figure(figsize=(16,10))
+    #     plt.plot(retention_range, reps_tracker1, label="5 New Cards per Day", color="#B06DD8")
+    #     plt.xlabel("Retention Rate", fontsize=18)
+    #     plt.ylabel("Number of Reviews", fontsize=18)
+    #     # plt.xlim(top=)
+    #     plt.title("Number of Simulated Reps Per Retention Rate after a Period of Days\nFor Cards at Memory Strength of 250% Ease, 85% Retention", fontsize=22)
+    #     plt.yticks(color="#B06DD8")   # blue
+    #     plt.twinx()
+    #     plt.plot(retention_range, reps_tracker2, label="10 New Cards per Day", color="#D8D06D")
+    #     plt.yticks(color="#D8D06D")   # yellow
+    #     plt.plot([], [], label="5 New Cards per Day", color="#B06DD8")
+    #     plt.legend(loc=9, fontsize=16)
+
+
+    # def simulate_optimal_ease_per_memory_strength(self, ease, retention, days=365, 
+    #                                                         new_cards_per_day=5):
+    #     # min_retention = 0.600
+    #     # max_retention = 0.949
+    #     retention_range = [x / 1000  for x in range(600, 900, 1)]
+
+    #     reps_tracker1 = []
+    #     reps_tracker2 = []
+    #     for new_retention in retention_range:
+    #         new_ease = (np.log(new_retention) / np.log(retention)) * ease
+
+    #         reps_tracker1 += [
+    #             self._simulate_uniform_ease_uniform_retention_from_scratch(
+    #                 new_ease, new_retention, days=100, new_cards_per_day=5, seed=1
+    #             )
+    #         ]
+
+    #     for new_retention in retention_range:
+    #         new_ease = (np.log(new_retention) / np.log(retention)) * (ease+200)
+
+    #         reps_tracker2 += [
+    #             self._simulate_uniform_ease_uniform_retention_from_scratch(
+    #                 new_ease, new_retention, days=100, new_cards_per_day=10, seed=1
+    #             )
+    #         ]
+
+    #     plt.figure(figsize=(16,10))
+    #     plt.plot(retention_range, reps_tracker1, label="Memory Strength of 250% Ease, 85% Retention", color="#B06DD8")
+    #     plt.xlabel("Retention Rate", fontsize=18)
+    #     plt.ylabel("Number of Reviews", fontsize=18)
+    #     plt.title("Number of Simulated Reps Per Retention Rate after a Period of Days\nFor Cards at Different Memory Strengths", fontsize=22)
+    #     plt.yticks(color="#B06DD8")   # blue
+    #     plt.twinx()
+    #     plt.plot(retention_range, reps_tracker2, label="Memory Strength of 450% Ease, 85% Retention", color="#D8D06D")
+    #     plt.yticks(color="#D8D06D")   # yellow
+    #     plt.ylim(top=7600)
+    #     plt.plot([], [], label="Memory Strength of 250% Ease, 85% Retention", color="#B06DD8")
+    #     plt.legend(loc=9, fontsize=16)
+
+
 
 
 
