@@ -854,6 +854,66 @@ class read():
         return df
 
 
+
+    # --------------------------------------------------------------------------
+
+    #                             USEFUL STATS
+
+    # --------------------------------------------------------------------------
+
+
+    def stats_lapse_retention(self, start_date: str = "", end_date: str = ""):
+        """
+        Get the percentage of corrent answers.
+
+        Date input in the format of "DD-MM-YY"
+        
+        """
+
+        df = self.tbl_reviews()
+
+        if start_date:
+            date = pd.to_datetime(start_date, format="%d-%m-%y")
+            df = df[df.Review_ID > date]
+        
+        if end_date:
+            date = pd.to_datetime(end_date, format="%d-%m-%y")
+            df = df[df.Review_ID < date]
+
+
+        track_lapses = []
+        wrong_count = 0
+        right_count = 0
+
+        def track_lapse_stats(row) -> None:
+            nonlocal track_lapses
+            nonlocal wrong_count
+            nonlocal right_count
+
+            is_relearning = row['Review_Type'] == 'Relearning'
+            if is_relearning:
+                track_lapses.append(row['Card_ID'])
+            
+            # the very next review after card_ID is stored will be the first review 
+            # after relearning
+            # however, to make sure the card hasnt seen reset to new, check the card 
+            # isnt new (i.e. 'Learning'). if new, remove card from list
+            elif row['Card_ID'] in track_lapses:
+                if row['Review_Type'] == 'Learning':
+                    track_lapses.remove(row['Card_ID'])
+                elif row['Card_ID'] == 'Wrong':
+                    wrong_count += 1
+                else:
+                    right_count += 1
+                    track_lapses.remove(row['Card_ID'])
+
+        df.apply(track_lapse_stats, axis=1)
+
+        print("Right:", right_count)
+        print("Wrong:", wrong_count)
+        print("Percentage Correct:", right_count / (right_count + wrong_count))
+
+
     # --------------------------------------------------------------------------
 
     #                                PLOTTING
@@ -1239,14 +1299,22 @@ class read():
     def simulate_no_changes(
         self,
         days=365,
-        new_cards_per_day=0
+        new_cards_per_day=0,
+        plot_sim=True
         ):
+        """
+        Simulate future card reviews of your current unsuspended collection, 
+        assuming the ease and retention rates stay the same. New cards will 
+        randomly be assigned an ease-retention pair 
+        from your existing cards.
+        """
         df, X_due, X_interval, len_X = self._simulate_init()
 
         X_ease = (df.Card_Last_Know_Ease_Factor_As_Percentage / 100).to_list()
         X_retention = df.Card_Reviews_Fraction_Correct.to_list()
 
-        self._simulation(days, X_ease, X_retention, X_due, X_interval, new_cards_per_day)
+        return self._simulation(days, X_ease, X_retention, X_due, X_interval,
+        new_cards_per_day, plot_sim=plot_sim)
 
 
     def simulate_uniform_retention(
@@ -1254,14 +1322,22 @@ class read():
         retention,
         retention_cap=0.9,
         days=365,
-        new_cards_per_day=0
+        new_cards_per_day=0,
+        plot_sim=True
         ):
+        """
+        Simulate future card reviews of your current unsuspended collection, 
+        assuming all cards' ease are adjusted to make each card's retention rate 
+        the same. New cards will randomly be assigned an ease-retention pair 
+        from your existing cards.
+        """
         df, X_due, X_interval, len_X = self._simulate_init()
 
         X_ease = self._calculate_adjusted_ease(df, retention, retention_cap)
         X_retention = [retention for _ in range(len_X)]
 
-        self._simulation(days, X_ease, X_retention, X_due, X_interval, new_cards_per_day)
+        return self._simulation(days, X_ease, X_retention, X_due, X_interval, 
+        new_cards_per_day, plot_sim=plot_sim)
 
 
     def simulate_uniform_ease(
@@ -1269,8 +1345,15 @@ class read():
         ease,
         retention_cap=0.9,
         days=365,
-        new_cards_per_day=0
+        new_cards_per_day=0,
+        plot_sim=True
         ):
+        """
+        Simulate future card reviews of your current unsuspended collection, 
+        assuming all cards' eases are adjusted to be the same. New cards will 
+        randomly be assigned an ease-retention pair 
+        from your existing cards.
+        """
         df, X_due, X_interval, len_X = self._simulate_init()
 
         # convert ease from % to multiplier
@@ -1279,7 +1362,50 @@ class read():
         X_ease = [ease for _ in range(len_X)]
         X_retention = self._calculate_adjusted_retention(df, ease, retention_cap)
 
-        self._simulation(days, X_ease, X_retention, X_due, X_interval, new_cards_per_day)
+        return self._simulation(days, X_ease, X_retention, X_due, X_interval, 
+        new_cards_per_day, plot_sim=plot_sim)
+
+
+    # # this doesnt work !!
+    # def simulate_compare_all_3(self, days=365, new_cards_per_day=5):
+    #     min = int(0.7 * 1000)
+    #     max = int(0.90 * 1000)
+    #     retention_range = [x / 1000 for x in range(min, max, 1)]
+
+    #     retention_reps_tracker = []
+    #     for retention in retention_range:
+    #         retention_reps_tracker += [
+    #             self.simulate_uniform_retention(
+    #                 retention, days=days, new_cards_per_day=new_cards_per_day, 
+    #                 plot_sim=False)
+    #         ]
+    #     r_min_reps = min(retention_reps_tracker)
+    #     r_min_index = retention_reps_tracker.index(r_min_reps)
+    #     r_min_val = retention_range[r_min_index]
+
+    #     min = 200
+    #     max = 600
+    #     ease_range = [x for x in range(min, max, 1)]
+
+    #     ease_reps_tracker = []
+    #     for ease in ease_range:
+    #         ease_reps_tracker += [
+    #             self.simulate_uniform_ease(
+    #                 ease, days=days, new_cards_per_day=new_cards_per_day, 
+    #                 plot_sim=False)
+    #         ]
+    #     e_min_reps = min(ease_reps_tracker)
+    #     e_min_index = ease_reps_tracker.index(e_min_reps)
+    #     e_min_val = ease_range[e_min_index]
+
+    #     return pd.DataFrame({'Type': ['No Change', 'Uniform Ease', 'Uniform Retention'],
+    #     'Min Reps': [
+    #         self.simulate_uniform_ease(
+    #                 ease, days=days, new_cards_per_day=new_cards_per_day, 
+    #                 plot_sim=False),
+    #         e_min_reps,
+    #         r_min_reps
+    #     ], 'Ease-Factor/Retention': [np.nan, e_min_val, r_min_val]})
 
 
     def _simulate_uniform_ease_uniform_retention_from_scratch(
