@@ -21,14 +21,14 @@ Copy your anki database (`collection.anki2`) from its folder.
 ```py
 import ankistats as ak
 
-# create database instance by inputting a filepath to collection.anki2
-db = ak.read('collection.anki2')
+# save filepath to collection.anki2
+ak.db_path('collection.anki2')
 
 # assign a table from the database to df
-df = db.tbl_cards()
+df = ak.tbl_cards()
 
 # premade plot of the adjusted ease vs. field length (default is field 2; usually answer field)
-db.plot_adjusted_ease_vs_field_length(note_types=['Science (Basic)'])
+ak.plot_adjusted_ease_vs_field_length(note_types=['Science (Basic)'])
 ```
 <img width=600 src="https://i.postimg.cc/4y9VhWtG/plot1.png">
 
