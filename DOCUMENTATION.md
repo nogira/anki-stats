@@ -8,12 +8,12 @@
 
 ```py
 import ankistats as ak
-db = ak.read('collection.anki2')
+ak.db_path('collection.anki2')
 ```
 
 ## Single Tables Direct from Database
 ```py
-db.tbl_cards()
+ak.tbl_cards()
 ```
 - ```py
   # Columns
@@ -36,48 +36,48 @@ db.tbl_cards()
   ```
 
 ```py
-db.tbl_collections()
+ak.tbl_collections()
 ```
 
 ```py
-db.tbl_config()
+ak.tbl_config()
 ```
 
 ```py
-db.tbl_deck_config()
+ak.tbl_deck_config()
 ```
 
 ```py
-db.tbl_decks()
+ak.tbl_decks()
 ```
 
 ```py
-db.tbl_note_fields()
+ak.tbl_note_fields()
 ```
 
 ```py
-db.tbl_graves()
+ak.tbl_graves()
 ```
 
 ```py
-db.tbl_reviews()
+ak.tbl_reviews()
 ```
 
 ```py
-db.tbl_note_types()
+ak.tbl_note_types()
 ```
 
 ```py
-db.tbl_note_templates()
+ak.tbl_note_templates()
 ```
 
 ```py
-db.tbl_notes()
+ak.tbl_notes()
 ```
 
 ## Combined Tables
 ```py
-db.cards()        # the combination of the cards table, the notes table
+ak.cards()        # the combination of the cards table, the notes table
 ```
 #### Additional Columns/Features
 - ```py
@@ -105,39 +105,49 @@ db.cards()        # the combination of the cards table, the notes table
   ```
 
 ```py
-db.reviews()
+ak.reviews()
 ```
 
 ## Plots
 ```py
-db.plot_adjusted_ease_vs_field_length()
+ak.plot_adjusted_ease_vs_field_length()
 ```
 <img width=600 src="https://i.postimg.cc/4y9VhWtG/plot1.png">
 
 ```py
-db.plot_average_answer_time_vs_field_length()
+ak.plot_average_answer_time_vs_field_length()
 ```
 <img width=600 src="https://i.postimg.cc/zG5KVSfm/plot2.png">
 
 ```py
-db.plot_adjusted_ease_vs_word_frequency()
+ak.plot_adjusted_ease_vs_word_frequency()
 ```
 <img width=600 src="https://i.postimg.cc/Pr11XFTz/plot3.png">
 
 ```py
-db.plot_adjusted_ease_if_image_present()
+ak.plot_adjusted_ease_if_image_present()
 ```
 <img width=600 src="https://i.postimg.cc/jqpzrr0S/plot4.png">
 
 ```py
-db.plot_answer_time_if_image_present()
+ak.plot_answer_time_if_image_present()
 ```
 <img width=600 src="https://i.postimg.cc/gcXv5277/plot5.png">
 
 ## Stats
 ```py
-db.stats_lapse_retention()
-# -> Right: 1663
+ak.stats_lapse_retention()
+# -> Right: 1303
+#    Wrong: 10
+#    Fraction Correct: 1.0
+```
+
+```py
+ak.stats_learning_graduation_retention(
+    graduation_interval="1 day",
+    pre_graduation_interval="10 min"
+)
+# -> Right: 7042
 #    Wrong: 0
 #    Fraction Correct: 1.0
 ```
