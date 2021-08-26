@@ -2,6 +2,8 @@
 
 - [Single Tables Direct from Database](#single-tables-direct-from-database)
 - [Combined Tables](#combined-tables)
+- [Plots](#plots)
+- [Stats](#stats)
 
 <br>
 
