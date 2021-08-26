@@ -90,42 +90,133 @@ ak.tbl_cards()
 ```py
 ak.tbl_collections()
 ```
+- ```py
+  # Columns
+  
+  'Collection_Creation_Time'
+  'Collection_Time_Last_Modified'
+  'Collection_Last_Schema_Modified_Time'
+  'Collection_Version'
+  'Collection_Last_Sync_Time'
+  'Collection_Config_JSON'
+  'Collection_Note_Type_JSON'
+  'Collection_Decks_JSON'
+  'Collection_Deck_Config_JSON'
+  'Collection_Tags'
+  ```
 
 ```py
 ak.tbl_config()
 ```
+- ```py
+  # Columns
+  
+  'Config_Key'
+  'Config_Time_Last_Modified'
+  'Config_Value'
+  ```
 
 ```py
 ak.tbl_deck_config()
 ```
+- ```py
+  # Columns
+  
+  'Deck_ID'
+  'Deck_Name'
+  'Deck_Config_Time_Last_Modified'
+  'Deck_Config'
+  ```
 
 ```py
 ak.tbl_decks()
 ```
+- ```py
+  # Columns
+  
+  'Deck_ID'
+  'Deck_Name'
+  'Deck_Time_Last_Modified'
+  'Deck_Common'
+  'Deck_Kind'
+  ```
 
 ```py
 ak.tbl_note_fields()
 ```
+- ```py
+  # Columns
+  
+  'Note_Type_ID'
+  'Note_Field_Ordinal'
+  'Note_Field_Name'
+  'Note_Field_Config'
+  ```
 
 ```py
 ak.tbl_graves()
 ```
+- ```py
+  # Columns
+  
+  'Grave_Original_ID'
+  'Grave_Type'
+  ```
 
 ```py
 ak.tbl_reviews()
 ```
+- ```py
+  # Columns
+  
+  'Review_ID'
+  'Card_ID'
+  'Review_Answer'
+  'Review_New_Interval'
+  'Review_Last_Interval'
+  'Review_New_Ease_Factor'
+  'Review_Time_To_Answer'
+  'Review_Type'
+  ```
 
 ```py
 ak.tbl_note_types()
 ```
+- ```py
+  # Columns
+  
+  'Note_Type_ID'
+  'Note_Type_Name'
+  'Note_Type_Time_Last_Modified'
+  'Note_Type_Config'
+  ```
 
 ```py
 ak.tbl_note_templates()
 ```
+- ```py
+  # Columns
+  
+  'Note_Type_ID'
+  'Note_Template_Ordinal'
+  'Note_Template_Name'
+  'Note_Template_Time_Last_Modified'
+  'Note_Template_Config'
+  ```
 
 ```py
 ak.tbl_notes()
 ```
+- ```py
+  # Columns
+  
+  'Note_ID'
+  'Note_Globally_Unique_ID'
+  'Note_Type_ID'
+  'Note_Time_Last_Modified'
+  'Note_Tags'
+  'Note_Fields'
+  ```
 
 
 ## Combined Tables
