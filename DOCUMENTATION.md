@@ -225,7 +225,7 @@ ak.cards()        # the combination of the cards table, the notes table
 ```
 #### Additional Columns/Features
 - ```py
-  'Card_Adjusted_Ease_Factor_As_Percentage'
+  'Card_Adjusted_Ease_Factor'
   ```
   - This is the expected ease factor if each card had a 85% retention rate. We do this to be able to use ease factor as a measure of card difficulty, as the adjustment removes the variability of retention rate from ease factor. The calculation to get the adjusted ease factor is given by the formula:
 
