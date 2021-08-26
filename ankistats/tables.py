@@ -181,7 +181,7 @@ def _word_frequency(df):
         pass
     else:
         with open(csv_path, 'w') as f:
-            url = 'https://raw.githubusercontent.com/nogira/anki-stats/main/unigram_freq.csv'
+            url = 'https://raw.githubusercontent.com/nogira/anki-stats/main/ankistats/unigram_freq.csv'
             f.write(get(url).text)
             del url
     del csv_path
