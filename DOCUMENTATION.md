@@ -1,9 +1,10 @@
 # Documentation
-
+- [Stats](#stats)
+- [Plots](#plots)
 - [Single Tables Direct from Database](#single-tables-direct-from-database)
 - [Combined Tables](#combined-tables)
-- [Plots](#plots)
-- [Stats](#stats)
+
+
 
 <br>
 
@@ -15,6 +16,53 @@
 import ankistats as ak
 ak.db_path('collection.anki2')
 ```
+
+
+## Stats
+```py
+ak.stats_lapse_retention()
+# -> Right: 1303
+#    Wrong: 10
+#    Fraction Correct: 1.0
+```
+
+```py
+ak.stats_learning_graduation_retention(
+    graduation_interval="1 day",
+    pre_graduation_interval="10 min"
+)
+# -> Right: 7042
+#    Wrong: 0
+#    Fraction Correct: 1.0
+```
+
+
+## Plots
+```py
+ak.plot_adjusted_ease_vs_field_length()
+```
+<img width=600 src="https://i.postimg.cc/4y9VhWtG/plot1.png">
+
+```py
+ak.plot_average_answer_time_vs_field_length()
+```
+<img width=600 src="https://i.postimg.cc/zG5KVSfm/plot2.png">
+
+```py
+ak.plot_adjusted_ease_vs_word_frequency()
+```
+<img width=600 src="https://i.postimg.cc/Pr11XFTz/plot3.png">
+
+```py
+ak.plot_adjusted_ease_if_image_present()
+```
+<img width=600 src="https://i.postimg.cc/jqpzrr0S/plot4.png">
+
+```py
+ak.plot_answer_time_if_image_present()
+```
+<img width=600 src="https://i.postimg.cc/gcXv5277/plot5.png">
+
 
 ## Single Tables Direct from Database
 ```py
@@ -80,6 +128,7 @@ ak.tbl_note_templates()
 ak.tbl_notes()
 ```
 
+
 ## Combined Tables
 ```py
 ak.cards()        # the combination of the cards table, the notes table
@@ -111,48 +160,4 @@ ak.cards()        # the combination of the cards table, the notes table
 
 ```py
 ak.reviews()
-```
-
-## Plots
-```py
-ak.plot_adjusted_ease_vs_field_length()
-```
-<img width=600 src="https://i.postimg.cc/4y9VhWtG/plot1.png">
-
-```py
-ak.plot_average_answer_time_vs_field_length()
-```
-<img width=600 src="https://i.postimg.cc/zG5KVSfm/plot2.png">
-
-```py
-ak.plot_adjusted_ease_vs_word_frequency()
-```
-<img width=600 src="https://i.postimg.cc/Pr11XFTz/plot3.png">
-
-```py
-ak.plot_adjusted_ease_if_image_present()
-```
-<img width=600 src="https://i.postimg.cc/jqpzrr0S/plot4.png">
-
-```py
-ak.plot_answer_time_if_image_present()
-```
-<img width=600 src="https://i.postimg.cc/gcXv5277/plot5.png">
-
-## Stats
-```py
-ak.stats_lapse_retention()
-# -> Right: 1303
-#    Wrong: 10
-#    Fraction Correct: 1.0
-```
-
-```py
-ak.stats_learning_graduation_retention(
-    graduation_interval="1 day",
-    pre_graduation_interval="10 min"
-)
-# -> Right: 7042
-#    Wrong: 0
-#    Fraction Correct: 1.0
 ```
