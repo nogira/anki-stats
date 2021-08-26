@@ -26,7 +26,7 @@ db.tbl_cards()
   'Card_Type'
   'Card_Queue'
   'Card_Due'
-  'Card_Current_Interval_In_Minutes'
+  'Card_Current_Interval'
   'Card_Ease_Factor_As_Percentage'
   'Card_Total_Reviews_Including_Lapses'
   'Card_Total_Lapses'
