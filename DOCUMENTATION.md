@@ -21,7 +21,7 @@ ak.db_path('collection.anki2')
 ```py
 ak.stats_lapse_retention()
 # -> Right: 1303
-#    Wrong: 10
+#    Wrong: 0
 #    Fraction Correct: 1.0
 ```
 
