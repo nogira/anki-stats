@@ -1,5 +1,8 @@
 # Documentation
 
+- [Single Tables Direct from Database](#single-tables-direct-from-database)
+- [Combined Tables](#combined-tables)
+
 <br>
 
 > ⚠️ **Note**: this is incomplete
