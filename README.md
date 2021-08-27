@@ -27,7 +27,7 @@ ak.db_path('collection.anki2')
 # assign a table from the database to df
 df = ak.tbl_cards()
 
-# premade plot of the adjusted ease vs. field length (default is field 2; usually answer field)
+# plot of the adjusted ease vs. field length (default is field 2; usually answer field)
 ak.plot_adjusted_ease_vs_field_length(note_types=['Science (Basic)'])
 ```
 <img width=600 src="https://i.postimg.cc/4y9VhWtG/plot1.png">
