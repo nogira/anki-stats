@@ -76,8 +76,7 @@ ak.simulate_no_changes(
 <img width=600 src="https://i.imgur.com/ItIqVsh.png">
 
 ```py
-ak.simulate_uniform_retention(![image](https://user-images.githubusercontent.com/83847986/131071669-05edeb20-a5f6-48ca-8f8b-c172b433e53f.png)
-
+ak.simulate_uniform_retention(
     retention=0.85,
     retention_cap=0.9,    # optional
     days=365,             # optional
