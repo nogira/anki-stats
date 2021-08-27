@@ -1,6 +1,7 @@
 # Documentation
 - [Stats](#stats)
 - [Plots](#plots)
+- [Simulations](#simulations)
 - [Single Tables Direct from Database](#single-tables-direct-from-database)
 - [Combined Tables](#combined-tables)
 
@@ -62,6 +63,45 @@ ak.plot_answer_time_if_image_present()
 ```
 <img width=600 src="https://i.postimg.cc/gcXv5277/plot5.png">
 
+## Simulations
+
+Note: Does not yet simulate changes in ease/retention, or current deck settings for things like learning/lapse steps.
+
+```py
+ak.simulate_no_changes(
+    days=365,             # optional
+    new_cards_per_day=0   # optional
+)
+```
+
+```py
+ak.simulate_uniform_retention(
+    retention=0.85,
+    retention_cap=0.9,    # optional
+    days=365,             # optional
+    new_cards_per_day=0   # optional
+)
+```
+
+```py
+ak.simulate_uniform_ease(
+    ease=2.5,
+    retention_cap=0.9,    # optional
+    days=365,             # optional
+    new_cards_per_day=0   # optional
+)
+```
+
+```py
+ak.simulate_optimal_ease_per_memory_strength_from_scratch(
+    ease,
+    retention,
+    days=365,              # optional
+    new_cards_per_day=5,   # optional
+    min_retention=0.6,     # optional
+    max_retention=0.9      # optional
+)
+```
 
 ## Single Tables Direct from Database
 ```py
