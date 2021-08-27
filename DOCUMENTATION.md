@@ -73,15 +73,18 @@ ak.simulate_no_changes(
     new_cards_per_day=0   # optional
 )
 ```
+<img width=600 src="https://i.imgur.com/ItIqVsh.png">
 
 ```py
-ak.simulate_uniform_retention(
+ak.simulate_uniform_retention(![image](https://user-images.githubusercontent.com/83847986/131071669-05edeb20-a5f6-48ca-8f8b-c172b433e53f.png)
+
     retention=0.85,
     retention_cap=0.9,    # optional
     days=365,             # optional
     new_cards_per_day=0   # optional
 )
 ```
+<img width=600 src="https://i.imgur.com/cVwAO8P.png">
 
 ```py
 ak.simulate_uniform_ease(
@@ -91,6 +94,7 @@ ak.simulate_uniform_ease(
     new_cards_per_day=0   # optional
 )
 ```
+<img width=600 src="https://i.imgur.com/cY2tM35.png">
 
 ```py
 ak.simulate_optimal_ease_per_memory_strength_from_scratch(
@@ -102,6 +106,8 @@ ak.simulate_optimal_ease_per_memory_strength_from_scratch(
     max_retention=0.9      # optional
 )
 ```
+<img width=600 src="https://i.imgur.com/r9VbLRh.png">
+
 
 ## Single Tables Direct from Database
 ```py
