@@ -17,7 +17,7 @@ pip install ankistats
 Copy your anki database (`collection.anki2`) from its folder.
 - Mac: `~/Library/Application Support/Anki2/<profile_name>`
 - Windows: `%appdata%/Anki2/<profile_name>`
-- Linux: `~/.local/share/Anki2`
+- Linux: `~/.local/share/Anki2/<profile_name>`
 ```py
 import ankistats as ak
 
