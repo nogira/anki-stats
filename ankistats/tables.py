@@ -34,15 +34,12 @@ from matplotlib.offsetbox import AnchoredText
 from numpy.polynomial.polynomial import Polynomial
 from os.path import abspath
 import random
+import math
 
 import seaborn as sns
 
 
-# note: don't try to cache tables; makes notebook slow
-
 # do new adjusted retention rate over last 7 reps instead of over all reps
-
-# change from class to var that stores database path, with all functions being separate
 
 
 # ------------------------------------------------------------------------------
@@ -867,17 +864,37 @@ def calc_new_ease(
     new_retention: float,
     old_ease: float,
     old_retention: float
-    ):
+    ) -> float:
     """new_retention, old_ease, old_retention"""
-
-    return old_ease * (np.log(new_retention) / np.log(old_retention))
+    # note: math faster that np for single numbers
+    return old_ease * (math.log(new_retention) / math.log(old_retention))
 
 
 def calc_new_retention(
     new_ease: float,
     old_ease: float,
     old_retention: float
-    ):
+    ) -> float:
+    """new_ease, old_ease, old_retention"""
+    # note: math faster that np for single numbers
+    return math.exp((new_ease / old_ease) * math.log(old_retention))
+
+
+def calc_new_ease_array(
+    new_retention: np.array,
+    old_ease: np.array,
+    old_retention: np.array
+    ) -> np.array:
+    """new_retention, old_ease, old_retention"""
+
+    return old_ease * (np.log(new_retention) / np.log(old_retention))
+
+
+def calc_new_retention_array(
+    new_ease: np.array,
+    old_ease: np.array,
+    old_retention: np.array
+    ) -> np.array:
     """new_ease, old_ease, old_retention"""
 
     return np.exp((new_ease / old_ease) * np.log(old_retention))

@@ -6,6 +6,7 @@ from .tables import *
 from .plots import *
 from .stats import *
 from .simulation import *
+from .scheduler_config import *
 
 def db_path(path):
     full_db.path = path
