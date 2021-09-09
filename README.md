@@ -1,4 +1,7 @@
-# Anki Stats
+<h1 align='center'>
+    Anki Stats 📊
+</h1>
+
 This is a python package to make it easier to analyse an [anki](https://apps.ankiweb.net/) database.
 - SQLite database w/ obscure names → pandas dataframes, w/ intuitive names
   - Get single tables
@@ -6,19 +9,29 @@ This is a python package to make it easier to analyse an [anki](https://apps.ank
 - Make plots with a single line of code
 - Simulate future reviews
 
+~ Anyone is welcome to submit a PR or suggest anything specific to add :) ~
+
 ## Install
 ```shell
 pip install ankistats
 ```
-#### Dependencies
-- pandas
-- seaborn
+<details><summary><b>Dependencies</b></summary>
+  <ul>
+    <li>pandas</li>
+    <li>seaborn</li>
+  </ul>
+</details>
 
 ## Use
-Copy your anki database (`collection.anki2`) from its folder.
-- Mac: `~/Library/Application Support/Anki2/<profile_name>`
-- Windows: `%appdata%/Anki2/<profile_name>`
-- Linux: `~/.local/share/Anki2/<profile_name>`
+
+<details><summary>Copy your anki database (<code>collection.anki2</code>) from its folder.</summary>
+  <ul>
+    <li>Mac: <code>~/Library/Application Support/Anki2/&lt;profile_name&gt;</code></li>
+    <li>Windows: <code>%appdata%/Anki2/&lt;profile_name&gt;</code></li>
+    <li>Linux: <code>~/.local/share/Anki2/&lt;profile_name&gt;</code></li>
+  </ul>
+</details>
+
 ```py
 import ankistats as ak
 
@@ -31,7 +44,9 @@ df = ak.tbl_cards()
 # plot of the adjusted ease vs. field length (default is field 2; usually answer field)
 ak.plot_adjusted_ease_vs_field_length(note_types=['Science (Basic)'])
 ```
-<img width=600 src="https://i.postimg.cc/4y9VhWtG/plot1.png">
+<details><summary>Plot Image</summary>
+  <img width=600 src="https://i.postimg.cc/4y9VhWtG/plot1.png">
+</details>
 
 <br>
 
@@ -45,18 +60,6 @@ ak.plot_adjusted_ease_vs_field_length(note_types=['Science (Basic)'])
 - https://github.com/jpromanonet/myAnkiDataBases
 - https://github.com/hochanh/r-anki
 - add to this list if you know more !
-
-## Roadmap
-- Add more features to tables to aid analysis
-  - Feautures added thus far:
-    - Frequency of word in note field with the lowest frequency
-    - Character count (not including html)
-    - Word count (not including html)
-    - Whether note field has an image or not
-- More plots
-- ML model to accurately (hopefully) predict probability of recall, allowing ease to be more objectively assigned
-
-~ Anyone is welcome to submit a PR or suggest anything specific to add :) ~
 
 ## Credits
 - [Structure of anki database](https://github.com/ankidroid/Anki-Android/wiki/Database-Structure) (slightly outdated, but still super useful)
