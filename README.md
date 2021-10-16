@@ -50,7 +50,7 @@ ak.plot_adjusted_ease_vs_field_length(note_types=['Science (Basic)'])
 
 <br>
 
-### ~ Info on all available functions at [Documentation.md](./Documentation.md) ~
+### ~ Info on all available functions at [DOCUMENTATION.md](./DOCUMENTATION.md) ~
 
 <br>
 
